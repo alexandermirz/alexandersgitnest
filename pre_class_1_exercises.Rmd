@@ -58,7 +58,7 @@ mtcars %>%
 #create some sort of plot plotting the data
 
 ggplot(cars, aes(gear)) + geom_histogram(bins=10) + scale_x_continuous(breaks=c(3,4,5)) + xlab("number of gears") + ylab("amount of cars")
-                 
+ggplot(cars, aes(cyl, mpg)) + geom_point() + geom_smooth(method="lm")
 
 
 ```
