@@ -54,3 +54,9 @@ ggplot(cars, aes(gear)) + geom_histogram(bins=10) + scale_x_continuous(breaks=c(
 ```
 
 ![](pre_class_1_exercises_files/figure-markdown_github/unnamed-chunk-1-1.png)
+
+``` r
+ggplot(cars, aes(cyl, mpg)) + geom_point() + geom_smooth(method="lm")
+```
+
+![](pre_class_1_exercises_files/figure-markdown_github/unnamed-chunk-1-2.png)
