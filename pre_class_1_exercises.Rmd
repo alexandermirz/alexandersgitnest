@@ -57,6 +57,11 @@ mtcars %>%
 
 #create some sort of plot plotting the data
 
+<<<<<<< HEAD
+ggplot(cars, aes(gear)) + geom_histogram(bins=10) + scale_x_continuous(breaks=c(3,4,5)) + xlab("number of gears") + ylab("amount of cars")
+      
+#does my pushing works??
+=======
 ggplot(cars, aes(gear)) +
   geom_histogram(bins=10) +
   scale_x_continuous(breaks=c(3,4,5)) +
@@ -68,6 +73,7 @@ ggplot(cars, aes(cyl, mpg)) +
   geom_smooth(method="lm")
 
 
+>>>>>>> 802a6e3fa775ad6d4ae34bf64de043fbfebd0cdc
 ```
 
 
