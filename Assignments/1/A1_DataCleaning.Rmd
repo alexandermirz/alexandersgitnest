@@ -222,8 +222,8 @@ asd_full_df <-
     Socializ = Socialization
     ) #Renaming critial columns 
 
-asd_full_df <- 
-  subset(asd_full_df, select = -c(VISIT)) #removing the visit column
+#asd_full_df <- 
+  #subset(asd_full_df, select = -c(VISIT)) #removing the visit column
 
 asd_full <- 
   merge(visit_1, asd_full_df) #Merged version of the dataframes with data only from 1st visit
@@ -265,7 +265,11 @@ List all kids who:
 3. have not completed all trials. Tip: Use pipes to solve this
 
 ```{r}
+filter(asd_full_df, CHI_MLU>2.7)#1
+filter(asd_full, CHI_MLU<1.5)#2
 
+asd_full_df %>%
+  filter(!complete.cases(asd_full_df[1:15]))#3 (Using complete cases)
 
 ```
 
@@ -276,7 +280,14 @@ USING ARRANGE
 2. Sort kids to find the kid who produced the least amount of words on the 1st visit.
 
 ```{r}
+#previously, the visit column has been removed, so the functions above are rerun and some held back to avoid removal of visit column. 
+asd_full_df %>%
+  filter(VISIT==6) %>%
+  arrange(desc(tokens_CHI)) #using desc to arrange in descending order.
 
+asd_full_df %>%
+  filter(VISIT==1) %>%
+  arrange(tokens_CHI)
 
 ```
 
@@ -286,6 +297,14 @@ USING SELECT
 2. What happens if you include the name of a variable multiple times in a select() call?
 
 ```{r}
+asd_full_df %>%
+  filter(Diagnosis=="A") %>%
+  select(CHI_MLU, tokens_CHI)
+
+#variable multiple times:
+asd_full_df %>%
+  filter(Diagnosis=="A") %>%
+  select(CHI_MLU, tokens_CHI, CHI_MLU) #nothing happens
 
 ```
 
@@ -297,5 +316,19 @@ USING MUTATE, SUMMARISE and PIPES
 
 ```{r}
 
+asd_full_df <- mutate(asd_full_df, mean(asd_full_df$tokens_CHI)) #Adding the new column #1
+
+visit_tokens <- vector("numeric") #creating and empty vector #2
+
+for (i in asd_full_df$VISIT){
+  sub=filter(asd_full_df, VISIT==i)
+  mean=mean(sub$tokens_CHI)
+  print(mean)
+  visit_tokens <- rbind(visit_tokens, mean)
+}#Looping through each visit and adding the mean value to each visit for each row. 
+
+asd_full_df <- mutate(asd_full_df, visit_tokens) #Appending it to the master data frame
+
+#3#
 
 ```
