@@ -1,0 +1,232 @@
+\documentclass[]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\usepackage{fixltx2e} % provides \textsubscript
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+\else % if luatex or xelatex
+  \ifxetex
+    \usepackage{mathspec}
+  \else
+    \usepackage{fontspec}
+  \fi
+  \defaultfontfeatures{Ligatures=TeX,Scale=MatchLowercase}
+\fi
+% use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+% use microtype if available
+\IfFileExists{microtype.sty}{%
+\usepackage{microtype}
+\UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\hypersetup{unicode=true,
+            pdftitle={Assignment 2 - Language Development in ASD - Part 1 - Explaining development},
+            pdfauthor={Alexander Jakub},
+            pdfborder={0 0 0},
+            breaklinks=true}
+\urlstyle{same}  % don't use monospace font for urls
+\usepackage{graphicx,grffile}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+\IfFileExists{parskip.sty}{%
+\usepackage{parskip}
+}{% else
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt plus 2pt minus 1pt}
+}
+\setlength{\emergencystretch}{3em}  % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{0}
+% Redefines (sub)paragraphs to behave more like sections
+\ifx\paragraph\undefined\else
+\let\oldparagraph\paragraph
+\renewcommand{\paragraph}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+\let\oldsubparagraph\subparagraph
+\renewcommand{\subparagraph}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+
+%%% Use protect on footnotes to avoid problems with footnotes in titles
+\let\rmarkdownfootnote\footnote%
+\def\footnote{\protect\rmarkdownfootnote}
+
+%%% Change title format to be more compact
+\usepackage{titling}
+
+% Create subtitle command for use in maketitle
+\providecommand{\subtitle}[1]{
+  \posttitle{
+    \begin{center}\large#1\end{center}
+    }
+}
+
+\setlength{\droptitle}{-2em}
+
+  \title{Assignment 2 - Language Development in ASD - Part 1 - Explaining
+development}
+    \pretitle{\vspace{\droptitle}\centering\huge}
+  \posttitle{\par}
+    \author{Alexander Jakub}
+    \preauthor{\centering\large\emph}
+  \postauthor{\par}
+      \predate{\centering\large\emph}
+  \postdate{\par}
+    \date{{[}DATE{]}}
+
+
+\begin{document}
+\maketitle
+
+\section{Assignment 2}\label{assignment-2}
+
+In this assignment you will have to discuss a few important questions
+(given the data you have). More details below. The assignment submitted
+to the teachers consists of: - a report answering and discussing the
+questions (so we can assess your conceptual understanding and ability to
+explain and critically reflect) - a link to a git repository with all
+the code (so we can assess your code)
+
+Part 1 - Basic description of language development - Describe your
+sample (n, age, gender, clinical and cognitive features of the two
+groups) and critically assess whether the groups (ASD and TD) are
+balanced - Describe linguistic development (in terms of MLU over time)
+in TD and ASD children (as a function of group). - Describe how parental
+use of language (in terms of MLU) changes over time. What do you think
+is going on? - Include individual differences in your model of language
+development (in children). Identify the best model.
+
+Part 2 - Model comparison - Discuss the differences in performance of
+your model in training and testing data - Which individual differences
+should be included in a model that maximizes your ability to
+explain/predict new data? - Predict a new kid's performance (Bernie) and
+discuss it against expected performance of the two groups
+
+Part 3 - Simulations to plan a new study - Report and discuss a power
+analyses identifying how many new kids you would need to replicate the
+results
+
+The following involves only Part 1.
+
+\subsection{Learning objectives}\label{learning-objectives}
+
+\begin{itemize}
+\tightlist
+\item
+  Summarize and report data and models
+\item
+  Critically apply mixed effects (or multilevel) models
+\item
+  Explore the issues involved in feature selection
+\end{itemize}
+
+\section{Quick recap}\label{quick-recap}
+
+Autism Spectrum Disorder is often related to language impairment.
+However, this phenomenon has not been empirically traced in detail: i)
+relying on actual naturalistic language production, ii) over extended
+periods of time.
+
+We therefore videotaped circa 30 kids with ASD and circa 30 comparison
+kids (matched by linguistic performance at visit 1) for ca. 30 minutes
+of naturalistic interactions with a parent. We repeated the data
+collection 6 times per kid, with 4 months between each visit. We
+transcribed the data and counted: i) the amount of words that each kid
+uses in each video. Same for the parent. ii) the amount of unique words
+that each kid uses in each video. Same for the parent. iii) the amount
+of morphemes per utterance (Mean Length of Utterance) displayed by each
+child in each video. Same for the parent.
+
+This data is in the file you prepared in the previous class.
+
+NB. A few children have been excluded from your datasets. We will be
+using them next week to evaluate how good your models are in assessing
+the linguistic development in new participants.
+
+This RMarkdown file includes 1) questions (see above). Questions have to
+be answered/discussed in a separate document that you have to directly
+send to the teachers. 2) A break down of the questions into a guided
+template full of hints for writing the code to solve the exercises. Fill
+in the code and the paragraphs as required. Then report your results in
+the doc for the teachers.
+
+REMEMBER that you will have to have a github repository for the code and
+send the answers to Kenneth and Riccardo without code (but a link to
+your github/gitlab repository). This way we can check your code, but you
+are also forced to figure out how to report your analyses :-)
+
+Before we get going, here is a reminder of the issues you will have to
+discuss in your report:
+
+1- Describe your sample (n, age, gender, clinical and cognitive features
+of the two groups) and critically assess whether the groups (ASD and TD)
+are balanced 2- Describe linguistic development (in terms of MLU over
+time) in TD and ASD children (as a function of group). 3- Describe how
+parental use of language (in terms of MLU) changes over time. What do
+you think is going on? 4- Include individual differences in your model
+of language development (in children). Identify the best model.
+
+\section{Let's go}\label{lets-go}
+
+\subsubsection{Loading the relevant
+libraries}\label{loading-the-relevant-libraries}
+
+Load necessary libraries : what will you need? - e.g.~something to deal
+with the data - e.g.~mixed effects models - e.g.~something to plot with
+
+\subsubsection{Define your working directory and load the
+data}\label{define-your-working-directory-and-load-the-data}
+
+If you created a project for this class and opened this Rmd file from
+within that project, your working directory is your project directory.
+
+If you opened this Rmd file outside of a project, you will need some
+code to find the data: - Create a new variable called locpath
+(localpath) - Set it to be equal to your working directory - Move to
+that directory (setwd(locpath)) - Load the data you saved last time (use
+read\_csv(fileName))
+
+\subsubsection{Characterize the participants (Exercise
+1)}\label{characterize-the-participants-exercise-1}
+
+\subsection{Let's test hypothesis 1: Children with ASD display a
+language impairment (Exercise
+2)}\label{lets-test-hypothesis-1-children-with-asd-display-a-language-impairment-exercise-2}
+
+\subsubsection{Hypothesis: The child's MLU changes: i) over time, ii)
+according to
+diagnosis}\label{hypothesis-the-childs-mlu-changes-i-over-time-ii-according-to-diagnosis}
+
+How would you evaluate whether the model is a good model?
+
+\subsection{Let's test hypothesis 2: Parents speak equally to children
+with ASD and TD (Exercise
+3)}\label{lets-test-hypothesis-2-parents-speak-equally-to-children-with-asd-and-td-exercise-3}
+
+\subsubsection{Adding new variables (Exercise
+4)}\label{adding-new-variables-exercise-4}
+
+\subsection{Part 2}\label{part-2}
+
+\subsubsection{Exercise 1) Testing model
+performance}\label{exercise-1-testing-model-performance}
+
+\subsubsection{Exercise 2) Model Selection via Cross-validation (N.B:
+ChildMLU!)}\label{exercise-2-model-selection-via-cross-validation-n.b-childmlu}
+
+\subsubsection{Exercise 3) Assessing the single
+child}\label{exercise-3-assessing-the-single-child}
+
+
+\end{document}
