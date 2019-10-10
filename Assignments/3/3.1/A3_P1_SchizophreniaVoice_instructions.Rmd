@@ -97,52 +97,63 @@ Only then (when everything works) turn the code into a function and use map_df()
 See placeholder code here for help.
 
 ```{r}
-library(tidyverse, readr, psych)
 library(pacman)
-pacman::p_load(psych)
+pacman::p_load(tidyverse, readr, psych)
+
+
 
 read_pitch <- function(filename) {
     ## parse filename to extract study, diagnosis, subject and trial
-    string=str_split(filename, "D", simplify = T)
-    study=str_extract(string[1], "\\d")
+    string=str_split(filename, "D",
+                simplify = T)
+    study=str_extract(string[1],
+                      "\\d")
     # Diagnosis:
-    diag=str_split(string[2], "S", simplify =T)
+    diag=str_split(string[2],
+                "S",
+                simplify =T)
     diagnosis=diag[1]
     # Subject: 
-    subj=str_split(diag[2], "T", simplify = T)
+    subj=str_split(diag[2],
+                "T", simplify = T)
     subject=subj[1]
     # Trial: 
-    tri=str_split(subj[2], "[[:punct:]]", simplify = T)
+    tri=str_split(subj[2],
+                  "[[:punct:]]",
+                  simplify = T)
     trial=tri[1]
-    #
-    data=read.delim(paste0("~/alexandersgitnest/Assignments/3/3.1/data/Pitch/", filename))
+    #Getting the data: 
+    data=read.delim(paste0("~/alexandersgitnest/Assignments/3/3.1/data/Pitch/",
+                           filename))
     sum=describe(data$f0)
     info <- 
       as.data.frame(cbind(study, diagnosis, subject, trial, sum$mean, sum$sd, sum$median, IQR(data$f0)))
-    colnames(info)[5] <- c("mean")
-    colnames(info)[6] <- c("sd")
-    colnames(info)[7] <- c("median")
-    colnames(info)[8] <- c("iqr")
+    colnames(info)[6] <- 
+      c("mean")
+    colnames(info)[7] <- 
+      c("sd")
+    colnames(info)[8] <- 
+      c("median")
+    colnames(info)[9] <- 
+      c("iqr")
       ## all information attained. 
     return(info)
 }
 
 
 # test it on just one file while writing the function
-test_data = read_pitch("Study1D0S126T6_f0.txt")
+test_data = 
+  read_pitch("Study3D0S342T1T2_f0.txt")
 
 
  # when you've created a function that works, you can
-# pitch_data = 
-#     list.files(path = "~/alexandersgitnest/Assignments/3/3.1/data/Pitch/",pattern = ".txt") %>% ## NB replace with your path to the files
-#     purrr::map_df(read_pitch)
-# pitch_data %>% filter(subject==101)
-
+pitch_data =
+    list.files(path = "~/alexandersgitnest/Assignments/3/3.1/data/Pitch/",
+               pattern = ".txt") %>% ## NB replace with your path to the files
+    purrr::map_df(read_pitch)
 
 write.csv(pitch_data, file = "pitch_data.csv")
 
-read.csv()
-?write_csv
 ```
 
 
@@ -151,36 +162,24 @@ read.csv()
 ```{r}
 # Let's start with the demographic and clinical data
 demo_data <- 
-  read.csv("DemographicData.csv", header = TRUE, sep= ";")
+  read.csv("DemographicData.csv",
+           header = TRUE,
+           sep= ";")
 
 pitch_data <- 
-  read.csv("pitch_data.csv", header = TRUE, sep = ",")
+  read.csv("pitch_data.csv",
+           header = TRUE,
+           sep = ",")
 
+pitch_data <- 
+  pitch_data %>% 
+  filter(X!=1256&X!=1259) #Removing the doublettes... 
 
 pitch_data1 <- pitch_data %>% 
-  filter(study==3)#|study==2|study==3|study==4)
+  filter(study==1|study==2|study==3|study==4)
 
 demo_data1 <- demo_data %>% 
   filter(Study==1|Study==2|Study==3|Study==4)
-
-  # study1 <- 
-  #   pitch_data %>% 
-  #   filter(study==1) %>% 
-  #   filter(diagnosis==0)
-  # demo1 <- 
-  #   demo_data %>% 
-  #   filter(Study==1) %>% 
-  #   filter(Diagnosis=="Control")
-  # 
-  # demo1$Diagnosis <- ifelse(demo1$Diagnosis =="Control", "0", "1")
-  # names(demo1)[3]= "diagnosis"
-  # names(demo1)[1]="study"
-  # names(demo1)[4]="subject"
-  # merged <- merge(study1, demo1, by=c("study", "subject"))
-  # ?colnames
-  # 
-
-#Missing values when merging: Study 3
 
 # renaming columns in demo_data to enable for merging:
 names(demo_data1)[3]= "diagnosis"
@@ -188,26 +187,45 @@ names(demo_data1)[1]="study"
 names(demo_data1)[4]="subject"
 demo_data1$diagnosis <- 
   ifelse(demo_data1$diagnosis =="Control", "0", "1")
-pitch_data_merged <- 
-  merge(pitch_data1, demo_data1, by=c("study", "diagnosis", "subject"))
 
-# then importing duration data
+# Missing values when merging: Study 3
+# merging demo_data1 and pitch_data1:
+pitch_demo1234 <- 
+  merge(demo_data1, pitch_data1,
+        by=c("subject",
+             "study",
+             "diagnosis")) #8 rows omitted... 
+
+# importing duration data
 art_data <- 
-  read.delim("Articulation.txt", header = TRUE, sep = ",")
+  read.delim("Articulation.txt",
+             header = TRUE,
+             sep = ",")
+# removing doublettes:
+art_data <- 
+  art_data[-c(742, 745),]
+  
 
 # fixing the study name column to enable merging:
 clean_df <- function(data) {
     ## parse filename to extract study, diagnosis, subject and trial
     string=str_split(data$soundname, "D", simplify = T)
-    study=str_extract(string[,1], "\\d")
+    study=str_extract(string[,1],
+                      "\\d")
     # Diagnosis:
-    diag=str_split(string[,2], "S", simplify =T)
+    diag=str_split(string[,2],
+                   "S",
+                   simplify =T)
     diagnosis=diag[,1]
     # Subject: 
-    subj=str_split(diag[,2], "T", simplify = T)
+    subj=str_split(diag[,2],
+                   "T",
+                   simplify = T)
     subject=subj[,1]
     # Trial: 
-    tri=str_split(subj[,2], "[[:punct:]]", simplify = T)
+    tri=str_split(subj[,2],
+                  "[[:punct:]]",
+                  simplify = T)
     trial=tri[,1]
     #
     info <- 
@@ -218,18 +236,19 @@ clean_df <- function(data) {
 # Running the function to get the full dataframe: 
 art_data <- clean_df(art_data)
 
-# Testing whether the problem with merging is the same
-art_data1 <- art_data %>% 
-  filter(study==1|study==2|study==3|study==4)
+# Extracting all the 1234 studies (Danish)
+art_data1234 <- 
+  art_data %>% 
+  filter(study==1|study==2|study==3|study==4)#same amount of rows as pitch_data1234, thus everything seems to be ok!
 
-demo_art <- merge(art_data1, demo_data1, by=c("study", "diagnosis", "subject"))
-
-# Finally the pitch data
-
-# Now we merge them
+#merging demo/pitch and art data:
+demo_art_pitch <- 
+  merge(pitch_demo1234, art_data1234,
+        by=c("subject", "study", "diagnosis", "trial"))
+# we now have a dataframe that enttails both the articulation, demographic and pitch data for our participants from first 4 studies!
 
 # Now we save them
-
+write.csv(demo_art_pitch, file = "demo_art_pitch.csv")
 ```
 
 ## Now we need to describe our sample
@@ -240,6 +259,58 @@ Finally, do the same by diagnosis and study, to assess systematic differences in
 I like to use group_by() %>% summarize() for quick summaries
 
 ```{r}
+demo_art_pitch2 <- 
+  read.csv("demo_art_pitch.csv", header = TRUE, sep = ",")
+
+# extracting all rows with missing values
+demo_art_pitch_clean <- 
+  demo_art_pitch2 %>%
+  na.omit(nsyll, npause, dur..s., phonationtime..s.)
+
+# how many with each diagnosis?
+demo_art_pitch_clean %>% 
+  group_by(diagnosis) %>% 
+  count()
+
+# how many belonging to each gender within diagnosed/no diagnosis
+demo_art_pitch_clean %>% 
+  group_by(diagnosis) %>% 
+  count(Gender)
+
+# age distribution & more for the whole dataset
+demo_art_pitch_clean %>% 
+  describe()
+
+# means and summary for each group (including symptom severity)
+demo_art_pitch_clean %>% 
+  filter(diagnosis==0) %>% 
+  summary()
+
+demo_art_pitch_clean %>% 
+  filter(diagnosis==1) %>% 
+  summary()
+#very balanced means... 
+  
+# doing the same for study and diagnosis
+demo_art_pitch2 %>% 
+  filter(study==1) %>% 
+  summary()
+
+demo_art_pitch_clean %>% 
+  filter(study==2) %>% 
+  summary()
+
+demo_art_pitch2 %>% 
+  filter(study==3) %>% 
+  summary()
+
+demo_art_pitch2 %>% 
+  filter(study==4) %>% 
+  summary()
+
+
+
+
 
 ```
 
