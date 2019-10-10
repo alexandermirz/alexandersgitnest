@@ -3,100 +3,101 @@ title: "Assignment 2 - Language Development in ASD - Part 1 - Explaining develop
 author: "Alexander Mirz & Jakub Raszka"
 date: '[DATE]'
 output:
-  html_document: default
+  html_document: 
+    keep_md: yes
   pdf_document: default
 ---
     
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-knitr::opts_chunk$set(include = FALSE)
+# knitr::opts_chunk$set(echo = TRUE)
+# knitr::opts_chunk$set(include = FALSE)
 
 ```
 
 # Assignment 2
 
-In this assignment you will have to discuss a few important questions (given the data you have). More details below. The assignment submitted to the teachers consists of:
-- a report answering and discussing the questions (so we can assess your conceptual understanding and ability to explain and critically reflect)
-- a link to a git repository with all the code (so we can assess your code)
+<!-- In this assignment you will have to discuss a few important questions (given the data you have). More details below. The assignment submitted to the teachers consists of: -->
+<!-- - a report answering and discussing the questions (so we can assess your conceptual understanding and ability to explain and critically reflect) -->
+<!-- - a link to a git repository with all the code (so we can assess your code) -->
 
-Part 1 - Basic description of language development
-- Describe your sample (n, age, gender, clinical and cognitive features of the two groups) and critically assess whether the groups (ASD and TD) are balanced
-- Describe linguistic development (in terms of MLU over time) in TD and ASD children (as a function of group). 
-- Describe how parental use of language (in terms of MLU) changes over time. What do you think is going on?
-- Include individual differences in your model of language development (in children). Identify the best model.
+<!-- Part 1 - Basic description of language development -->
+<!-- - Describe your sample (n, age, gender, clinical and cognitive features of the two groups) and critically assess whether the groups (ASD and TD) are balanced -->
+<!-- - Describe linguistic development (in terms of MLU over time) in TD and ASD children (as a function of group).  -->
+<!-- - Describe how parental use of language (in terms of MLU) changes over time. What do you think is going on? -->
+<!-- - Include individual differences in your model of language development (in children). Identify the best model. -->
 
-Part 2 - Model comparison
-- Discuss the differences in performance of your model in training and testing data
-- Which individual differences should be included in a model that maximizes your ability to explain/predict new data?
-- Predict a new kid's performance (Bernie) and discuss it against expected performance of the two groups
+<!-- Part 2 - Model comparison -->
+<!-- - Discuss the differences in performance of your model in training and testing data -->
+<!-- - Which individual differences should be included in a model that maximizes your ability to explain/predict new data? -->
+<!-- - Predict a new kid's performance (Bernie) and discuss it against expected performance of the two groups -->
 
-Part 3 - Simulations to plan a new study
-- Report and discuss a power analyses identifying how many new kids you would need to replicate the results
+<!-- Part 3 - Simulations to plan a new study -->
+<!-- - Report and discuss a power analyses identifying how many new kids you would need to replicate the results -->
 
-The following involves only Part 1.
+<!-- The following involves only Part 1. -->
 
-## Learning objectives
+<!-- ## Learning objectives -->
 
-- Summarize and report data and models
-- Critically apply mixed effects (or multilevel) models
-- Explore the issues involved in feature selection
+<!-- - Summarize and report data and models -->
+<!-- - Critically apply mixed effects (or multilevel) models -->
+<!-- - Explore the issues involved in feature selection -->
 
 
-# Quick recap
-Autism Spectrum Disorder is often related to language impairment. However, this phenomenon has not been empirically traced in detail:
-i) relying on actual naturalistic language production,  ii) over extended periods of time.
+<!-- # Quick recap -->
+<!-- Autism Spectrum Disorder is often related to language impairment. However, this phenomenon has not been empirically traced in detail: -->
+<!-- i) relying on actual naturalistic language production,  ii) over extended periods of time. -->
 
-We therefore videotaped circa 30 kids with ASD and circa 30 comparison kids (matched by linguistic performance at visit 1) for ca. 30 minutes of naturalistic interactions with a parent. We repeated the data collection 6 times per kid, with 4 months between each visit. We transcribed the data and counted: 
-i) the amount of words that each kid uses in each video. Same for the parent.
-ii) the amount of unique words that each kid uses in each video. Same for the parent.
-iii) the amount of morphemes per utterance (Mean Length of Utterance) displayed by each child in each video. Same for the parent. 
+<!-- We therefore videotaped circa 30 kids with ASD and circa 30 comparison kids (matched by linguistic performance at visit 1) for ca. 30 minutes of naturalistic interactions with a parent. We repeated the data collection 6 times per kid, with 4 months between each visit. We transcribed the data and counted:  -->
+<!-- i) the amount of words that each kid uses in each video. Same for the parent. -->
+<!-- ii) the amount of unique words that each kid uses in each video. Same for the parent. -->
+<!-- iii) the amount of morphemes per utterance (Mean Length of Utterance) displayed by each child in each video. Same for the parent.  -->
 
-This data is in the file you prepared in the previous class. 
+<!-- This data is in the file you prepared in the previous class.  -->
 
-NB. A few children have been excluded from your datasets. We will be using them next week to evaluate how good your models are in assessing the linguistic development in new participants.
+<!-- NB. A few children have been excluded from your datasets. We will be using them next week to evaluate how good your models are in assessing the linguistic development in new participants. -->
 
-This RMarkdown file includes 
-1) questions (see above). Questions have to be answered/discussed in a separate document that you have to directly send to the teachers.
-2) A break down of the questions into a guided template full of hints for writing the code to solve the exercises. Fill in the code and the paragraphs as required. Then report your results in the doc for the teachers.
+<!-- This RMarkdown file includes  -->
+<!-- 1) questions (see above). Questions have to be answered/discussed in a separate document that you have to directly send to the teachers. -->
+<!-- 2) A break down of the questions into a guided template full of hints for writing the code to solve the exercises. Fill in the code and the paragraphs as required. Then report your results in the doc for the teachers. -->
 
-REMEMBER that you will have to have a github repository for the code and send the answers to Kenneth and Riccardo without code (but a link to your github/gitlab repository). This way we can check your code, but you are also forced to figure out how to report your analyses :-)
+<!-- REMEMBER that you will have to have a github repository for the code and send the answers to Kenneth and Riccardo without code (but a link to your github/gitlab repository). This way we can check your code, but you are also forced to figure out how to report your analyses :-) -->
 
-Before we get going, here is a reminder of the issues you will have to discuss in your report:
+<!-- Before we get going, here is a reminder of the issues you will have to discuss in your report: -->
 
-1- Describe your sample (n, age, gender, clinical and cognitive features of the two groups) and critically assess whether the groups (ASD and TD) are balanced
-2- Describe linguistic development (in terms of MLU over time) in TD and ASD children (as a function of group). 
-3- Describe how parental use of language (in terms of MLU) changes over time. What do you think is going on?
-4- Include individual differences in your model of language development (in children). Identify the best model.
+<!-- 1- Describe your sample (n, age, gender, clinical and cognitive features of the two groups) and critically assess whether the groups (ASD and TD) are balanced -->
+<!-- 2- Describe linguistic development (in terms of MLU over time) in TD and ASD children (as a function of group).  -->
+<!-- 3- Describe how parental use of language (in terms of MLU) changes over time. What do you think is going on? -->
+<!-- 4- Include individual differences in your model of language development (in children). Identify the best model. -->
 
 # Let's go
 
-### Loading the relevant libraries
+<!-- ### Loading the relevant libraries -->
 
-Load necessary libraries : what will you need?
-- e.g. something to deal with the data
-- e.g. mixed effects models
-- e.g. something to plot with
+<!-- Load necessary libraries : what will you need? -->
+<!-- - e.g. something to deal with the data -->
+<!-- - e.g. mixed effects models -->
+<!-- - e.g. something to plot with -->
 
 ```{r Load Libraries, include = FALSE}
 library(pacman)
 
-p_load(dplyr, tidyverse, ggplot2,lme4,psych, growthcurver)
+p_load(dplyr, tidyverse, ggplot2, lme4, psych, growthcurver)
 ```
 
-### Define your working directory and load the data
-If you created a project for this class and opened this Rmd file from within that project, your working directory is your project directory.
+<!-- ### Define your working directory and load the data -->
+<!-- If you created a project for this class and opened this Rmd file from within that project, your working directory is your project directory. -->
 
-If you opened this Rmd file outside of a project, you will need some code to find the data:
-- Create a new variable called locpath (localpath)
-- Set it to be equal to your working directory
-- Move to that directory (setwd(locpath))
-- Load the data you saved last time (use read_csv(fileName))
+<!-- If you opened this Rmd file outside of a project, you will need some code to find the data: -->
+<!-- - Create a new variable called locpath (localpath) -->
+<!-- - Set it to be equal to your working directory -->
+<!-- - Move to that directory (setwd(locpath)) -->
+<!-- - Load the data you saved last time (use read_csv(fileName)) -->
 
 ```{r Load Data, include = FALSE}
 df<-read.csv(file="~/alexandersgitnest/Assignments/2/Data/asd_full_df",header=TRUE,sep=",")
 ```
 
-### Characterize the participants (Exercise 1)
+# Characterize the participants (Exercise 1)
 
 <!-- Identify relevant variables: participants demographic characteristics, diagnosis, ADOS, Verbal IQ, Non Verbal IQ, Socialization, Visit, Number of words used, Number of unique words used, mean length of utterance in both child and parents. -->
 
@@ -104,9 +105,7 @@ df<-read.csv(file="~/alexandersgitnest/Assignments/2/Data/asd_full_df",header=TR
 
 <!-- Describe the characteristics of the two groups of participants and whether the two groups are well matched. -->
 
-```{r descriptive stats, include = FALSE}
-
-
+```{r}
 #demographic characteristics
 
 ###AGE, Verbal IQ, Non-verbal IQ, ADOS, Socialization, Unique words, total words, MLU_CHI, MLU_MOT###
@@ -121,7 +120,7 @@ df %>%
   subset(VISIT==1) %>%
   subset(Diagnosis=="TD") %>% 
   describe()
-##See written out descriptions in paper##
+
 
 ###GENDER###
 df %>%
@@ -139,6 +138,7 @@ df %>%
   summary()
 ##Very unequal gender distribution within groups - But the proportion seems to at large be similar in ASD and TD kids. 
 ```
+## See the written out descriptions in paper
 
 ## Let's test hypothesis 1: Children with ASD display a language impairment  (Exercise 2)
 
@@ -146,7 +146,7 @@ df %>%
 
 
 
-```{r ex2, include = FALSE}
+```{r}
 #plotting difference between diagnoses
 ggplot(df,
   aes(x = VISIT, y=CHI_MLU, group=Diagnosis))+
@@ -168,17 +168,15 @@ model1 <- lmer(
   CHI_MLU~1+Diagnosis*VISIT+
   (1+VISIT|SUBJ),
   data = df,REML=FALSE)
-
-model1
 #A simple linear model with the interaction between n-visit and diagnosis (different development per visit per diagnosis) and SUBJECT as random intercept and random slope for each participant per visit. 
 
- 
+summary(model1)
 
 ```
 
-How would you evaluate whether the model is a good model?
+##How would we evaluate whether the model is a good model? Doing the following:
 
-```{r ex2 evaluate, include = FALSE}
+```{r}
 ##Constructing a null-model for comparison
 model0 <- 
   lmer(CHI_MLU~1*VISIT+(1+VISIT|SUBJ),
@@ -221,13 +219,12 @@ anova(model0,
 summary(model1)
 ```
 
-<!-- As per the graphical representations above, there seems to be steeper and more consistent development over time for the children that do not have the ASD diagnosis.  -->
+As per the graphical representations above, there seems to be steeper and more consistent development over time for the children that do not have the ASD diagnosis.
 
 ## Let's test hypothesis 2: Parents speak equally to children with ASD and TD  (Exercise 3)
 
-```{r ex3, include = FALSE}
+```{r}
 #First testing for time as main effect against null model: (Assuming that the interaction from the CHI_MLU upholds here as well)
-
 model2_0 = 
   lmer(MOT_MLU ~ 1+Diagnosis + (1+VISIT|SUBJ),
        df,
@@ -268,14 +265,13 @@ ggplot(data = df,
 
 ### Adding new variables (Exercise 4)
 
-```{r ex4, include = FALSE}
+```{r}
 #### Duplicate the verbal IQ for each participant from 1st visit ### 
 ExLaRaw_1st <- 
   vector("numeric") 
 for (i in df$SUBJ){
   first = df %>% 
     subset(SUBJ==i)
-  print(first$ExLaRaw[1])
   values=first$ExLaRaw[1]
   ExLaRaw_1st <- 
     rbind(ExLaRaw_1st,
@@ -291,7 +287,6 @@ MR_1st <-
 for (i in df$SUBJ){
   first = df %>% 
     subset(SUBJ==i)
-  print(first$MR[1])
   values=first$MR[1]
   MR_1st <- 
     rbind(MR_1st, 
@@ -306,7 +301,6 @@ ADOS_1st <-
 for (i in df$SUBJ){
   first = df %>% 
     subset(SUBJ==i)
-  print(first$ADOS1[1])
   values=first$ADOS1[1]
   ADOS_1st <- 
     rbind(ADOS_1st,
@@ -322,7 +316,6 @@ Socializ_1st <-
 for (i in df$SUBJ){
   first = df %>% 
     subset(SUBJ==i)
-  print(first$Socializ[1])
   values=first$Socializ[1]
   Socializ_1st <- 
     rbind(Socializ_1st, 
@@ -362,21 +355,21 @@ model_class2 <-
 summary(model_class2)
 
 model_class3 <- 
-  lmer(CHI_MLU ~ 1+VISIT*Diagnosis + VISIT*ExLaRaw_1st + VISIT:ADOS_1st + (1 + VISIT|SUBJ),
+  lmer(CHI_MLU ~ 1+VISIT:Diagnosis + VISIT:ExLaRaw_1st + Diagnosis:ExLaRaw_1st+ VISIT + Diagnosis+ ExLaRaw_1st + (1 + VISIT|SUBJ),
        df, 
-       REML=FALSE)
+       REML=FALSE,
+       control = lmerControl(optimizer="nloptwrap", calc.derivs = FALSE)) #using optimizer to help the convergence errors we get... 
 
 model_class3_0 <- 
-  lmer(CHI_MLU ~  1+1*Diagnosis + VISIT*ExLaRaw_1st+VISIT:ADOS_1st + (1 + VISIT|SUBJ),
+  lmer(CHI_MLU ~  1+1*Diagnosis + VISIT:ExLaRaw_1st + Diagnosis:ExLaRaw_1st + VISIT + Diagnosis + ExLaRaw_1st + (1 + VISIT|SUBJ),
        df, 
-       REML=FALSE)
+       REML=FALSE,
+       control = lmerControl(optimizer="nloptwrap", calc.derivs = FALSE))
 
-## The most sensible model here seems to be the following: CHI_MLU~1+VISIT*Diagnosis+VISIT*verbalIQ1+ADOS_1st
+## The most sensible model here seems to be the following: VISIT:Diagnosis + VISIT:ExLaRaw_1st + VISIT + Diagnosis+ ExLaRaw_1st
 ## The model gives us the following results: 
 summary(model_class3)
 anova(model_class3, model_class3_0)
-
-
 
 
 ```
@@ -388,12 +381,11 @@ anova(model_class3, model_class3_0)
 
 ### Exercise 1) Testing model performance
 
-```{r, include = FALSE}
+```{r}
 
 pacman::p_load(readr,dplyr,stringr,lmerTest,Metrics,caret, groupdata2, merTools)
 
-## Clean up function, included to inspire you
-
+## Thx Riccardo!! 
 CleanUpData <- function(Demo,LU,Word){
   
   Speech <- merge(LU, Word) %>% 
@@ -475,7 +467,6 @@ summary(master_model_train)
 #- calculate performance of the model on the training data: root mean square error is a good measure. (Tip: google the function rmse())
 pred_train <- 
   predict(master_model_train)
-pred_train
 rmse(training$CHI_MLU, pred_train)
 
 #- test the performance of the models on the test data (Tips: google the functions "predict()")
@@ -483,7 +474,7 @@ pred_test <-
   predict(master_model_train, test, allow.new.levels=T) #Allow new levels is telling the predictor to look at the kids it has not seen before. Dropping the specific random effects because this is new data. 
 rmse(pred_test, pred_train)
 rmse(test$CHI_MLU, pred_test)
-#Do RMSE!!!
+
 
 #- optional: predictions are never certain, can you identify the uncertainty of the predictions? (e.g. google predictinterval())
 ?predictInterval
@@ -503,7 +494,7 @@ pacman::p_load(readr,dplyr,stringr,lmerTest,Metrics,caret, groupdata2, merTools)
 basic_model <- lmer(CHI_MLU~Visit*Diagnosis+(1+Visit|Child.ID), data=training, REML=FALSE)
 summary(basic_model)
 
-#- Make a cross-validated version of the model. (Tips: google the function "createFolds";  loop through each fold, train a model on the other folds and test it on the fold)
+#- Make a cross-validated version of the model. 
 
 #Basic model
 fold_df <- fold(training, k = 5, id_col= "Child.ID") #Creating folds 
@@ -511,7 +502,11 @@ RMSE <- numeric(5) #Preparing vector for the RMSE values
 for (i in 1:5){
   fold = subset(fold_df, .folds==i)
   others = subset(fold_df, .folds!=i)
-  model_basic <- lmer(CHI_MLU~+1+Visit*Diagnosis+(1+Visit|Child.ID), data=others, REML=FALSE)
+  model_basic <- lmer(CHI_MLU~+1+Visit*Diagnosis+(1+Visit|Child.ID),
+                      data=others,
+                      REML=FALSE,
+                      control = lmerControl(optimizer="nloptwrap",
+                                            calc.derivs = FALSE))
   testing <-  predict(model_basic, fold, allow.new.levels=T)
   RMSE[i] <- rmse(fold$CHI_MLU, testing)
 }
@@ -519,36 +514,36 @@ for (i in 1:5){
 RMSE #getting the RMSE values (mean these!)
 mean(RMSE)
 sd(RMSE)
-0.7529 #Is there is too much SD in the RMSE squareroot, more data should be required.
+# 0.7529 Is there is too much SD in the RMSE squareroot, more data should be required.
 
-#- Report the results and comment on them. 
 
-##Based on the values produced by the loop for each model, the more complicated model seems to leave a lot less variance unexplained! (RMSE). 
+## Based on the values produced by the loop for each model, the more complicated model seems to leave a lot less variance unexplained! (RMSE). 
 
-#- Now try to find the best possible predictive model of ChildMLU, that is, the one that produces the best cross-validated results.
+#- Finding the best possible predictive model of ChildMLU, that is, the one that produces the best cross-validated results:
 
-#Doing the same loop for the complicated model to compare to the basic one:  #1+Visit*ASD+V*VIQ1+V*ADOS1st 
+# Doing the same loop for the complicated model to compare to the basic one:  #1+Visit:Diagnosis+Visit:VIQ1+Diagnosis:VIQ1+Visit+Diagnosis+verbalIQ
 RMSE_comp <- numeric(5)
 for (i in 1:5){
   fold = subset(fold_df, .folds==i)
   others = subset(fold_df, .folds!=i)
-  model <- lmer(CHI_MLU~1+Visit*Diagnosis*verbalIQ1+(1+Visit|Child.ID), data = others, REML=FALSE)
+  model <- lmer(CHI_MLU~1+Visit:Diagnosis+Visit:verbalIQ1+Diagnosis:verbalIQ1+Visit+Diagnosis+verbalIQ1+(1+Visit|Child.ID),
+                data = others,
+                REML=FALSE,
+                control = lmerControl(optimizer="nloptwrap", 
+                                      calc.derivs = FALSE))
   testing <-  predict(model, fold, allow.new.levels=T)
   RMSE_comp[i] <- rmse(fold$CHI_MLU, testing)
 }
 
 RMSE_comp
-mean(RMSE_comp) # 0.54
-#3 folds: 0.5668
-#4 folds: 0.5611
-#5 folds: 0.5433
-#6 folds: 0.5581
+mean(RMSE_comp) # 0.5562
+#3 folds: 0.5794
+#4 folds: 0.5704
+#5 folds: 0.5562
+#6 folds: 0.5627
 
-plot(RMSE_comp)
-
+#Important to note here: We cannot do traceback on the values since each time a new fold df is produced, the assigned folds change and thus end up changing the rmse slightly. 
 ```
-
-<!-- [HERE GOES YOUR ANSWER] -->
 
 ### Exercise 3) Assessing the single child
 
@@ -566,13 +561,18 @@ plot(RMSE_comp)
 ##Assuming Bernie's data is not part of the modelling but instead has to be compared to it, we extract him from the corpus and run our predictive model without his data. 
 
 ##Joining test- and traning data to have greater explanatory power:
-test$Child.ID <- test$Child.ID+1000 #Changing the test df in order to not have the same IDs for participants when combining
+test$Child.ID <-
+  test$Child.ID+1000 #Changing the test df in order to not have the same IDs for participants when combining
 
-test_merge <- test %>% filter(Child.ID != 1002) #Removing Bernie
+test_merge <- 
+  test %>%
+  filter(Child.ID != 1002) #Removing Bernie
 test_train_df <- rbind(training, test)
 
 ##Extracting Bernie rows:
-bernie <- test %>% filter(Child.ID==1002) #Upon visual inspection, it was found that Bernie had been renamed to child no. 2. This is of course not the optimal (ethical) way of doing so, but this made us avoid tracing back his data and cleaning it all again...
+bernie <- 
+  test %>%
+  filter(Child.ID==1002) #Upon visual inspection, it was found that Bernie had been renamed to child no. 2. This is of course not the optimal (ethical) way of doing so, but this made us avoid tracing back his data and cleaning it all again...
 
 ##Making dataframe with all kids and no bernie:
 all_kids_no_bernie <- 
@@ -591,12 +591,17 @@ for (i in 1:6){
   td_average_mlu[i] <- mean
 }  #For each visit, produce mean MLU for ASD kids
     
-bernie <- mutate(bernie, td_average_mlu)#append the averages to Bernie DF
-bernie <- mutate(bernie, absolute_dif=CHI_MLU-td_average_mlu) #Find absolute difference between bernie MLU and avergae TD MLU. 
+bernie <- 
+  mutate(bernie, td_average_mlu)#append the averages to Bernie DF
+bernie <- 
+  mutate(bernie, absolute_dif=CHI_MLU-td_average_mlu) #Find absolute difference between bernie MLU and avergae TD MLU. 
 
 
 ##Training the model on all kids TD kids (except Bernie)
-bernie_model <- lmer(CHI_MLU~1+Visit*Diagnosis*verbalIQ1+(1+Visit|Child.ID), data = all_kids_no_bernie, REML=FALSE)
+bernie_model <- 
+  lmer(CHI_MLU~1+Visit:Diagnosis+Visit:verbalIQ1+Diagnosis:verbalIQ1+Visit+Diagnosis+verbalIQ1+(1+Visit|Child.ID), 
+       data = all_kids_no_bernie,
+       REML=FALSE)
 
 bernie_pred <- predict(bernie_model, bernie, allow.new.levels = TRUE) #predicting MLU for Bernie
 bernie <- mutate(bernie, bernie_pred) ##appending the predicted values for bernie to the bernie DF for comparison
@@ -606,6 +611,164 @@ bernie <- mutate(bernie, bernie_pred) ##appending the predicted values for berni
 plot(bernie$bernie_pred, bernie$CHI_MLU) #Upon inspecting the plot, one can see, that the predictions for bernies MLU at visit 6 are more optimistic than what his actual MLU was at the given time. 
 
 ```
+
+
+
+
+# Part 3
+## Exercise 1
+
+```{r include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+pacman::p_load(tidyverse, dplyr, ggplot2, lmerTest, lme4, simr,psych)
+
+###loading data
+clean_train<-read.csv(file='df_train_clean.csv',header=TRUE,sep=",")
+clean_test<-read.csv(file='df_test_clean.csv',header=TRUE,sep=",")
+
+###mergining dataframes
+comp_data <- merge(clean_train, clean_test, all=T)
+
+###attempt to resolve issufe of an convergance with scaling
+comp_data <- mutate(comp_data, scaled_verbalIQ=scale(comp_data$verbalIQ1, center = T, scale = T))
+comp_data <- mutate(comp_data, scaled_CHI_MLU=scale(comp_data$CHI_MLU, center = T, scale = T))
+comp_data <- mutate(comp_data, scaled_Visit=scale(comp_data$Visit, center = T, scale = T))
+```
+
+<!-- ## Welcome to the third exciting part of the Language Development in ASD exercise -->
+
+<!-- In this part of the assignment, we try to figure out how a new study should be planned (i.e. how many participants?) in order to have enough power to replicate the findings (ensuring our sample size is adequate, our alpha at 0.05 and our beta at 0.8): -->
+<!-- 1- if we trust the estimates of the current study. Report the power analysis and comment on what you can (or cannot) use its estimates for. -->
+<!-- 2- if we are skeptical of the current study. Report the power analysis and comment on what you can (or cannot) use its estimates for. -->
+<!-- 3- if we only have access to 30 participants. Identify the power for each relevant effect and discuss whether it's worth to run the study and why -->
+<!-- The list above is also what you should discuss in your code-less report. -->
+
+
+<!-- ## Learning objectives -->
+
+<!-- - Learn how to calculate statistical power -->
+<!-- - Critically appraise how to apply frequentist statistical power -->
+
+<!-- ### Exercise 1 -->
+
+<!-- How much power does your study have (if your model estimates are quite right)? -->
+<!-- - Load your dataset (both training and testing), fit your favorite model, assess power for your effects of interest (probably your interactions). -->
+<!-- - Report the power analysis and comment on what you can (or cannot) use its estimates for. -->
+<!-- - Test how many participants you would have to have to replicate the findings (assuming the findings are correct) -->
+
+<!-- N.B. Remember that main effects are tricky once you have interactions in the model (same for 2-way interactions w 3-way interactions in the model). If you want to test the power of main effects, run a model excluding the interactions. -->
+<!-- N.B. Check this paper: https://besjournals.onlinelibrary.wiley.com/doi/full/10.1111/2041-210X.12504 -->
+<!-- You will be using: -->
+<!-- - powerSim() to calculate power -->
+<!-- - powerCurve() to estimate the needed number of participants -->
+<!-- - extend() to simulate more participants -->
+
+```{r, cache =TRUE}
+####simpler/longer version of our best model###
+complexMS<- lmer(scaled_CHI_MLU~scaled_Visit + Diagnosis + scaled_verbalIQ+ scaled_Visit:Diagnosis+scaled_Visit:scaled_verbalIQ + Diagnosis:scaled_verbalIQ+(1+ scaled_Visit|Child.ID),data = comp_data, REML=FALSE,
+                control = lmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
+summary(complexMS)
+
+#unscaled visit
+complexMUSV<- lmer(scaled_CHI_MLU~ Visit + Diagnosis + scaled_verbalIQ+ Visit:Diagnosis+Visit:scaled_verbalIQ + Diagnosis:scaled_verbalIQ+(1+ Visit|Child.ID),data = comp_data, REML=FALSE, 
+                   control = lmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
+summary(complexMUSV)
+
+
+###Power analysis###
+
+#power of visit:verbalIQ1
+complexS1=powerSim(complexMUSV, test = fixed("Visit:Diagnosis"), nsim = 1000, seed = 1, progress = F) # 100.0% (99.63, 100.0)
+complexS1
+
+#power of visit:verbalIQ1
+complexS2=powerSim(complexMUSV, test = fixed("Visit:scaled_verbalIQ"), nsim = 1000, seed = 1, progress = F) # 46.80% (43.67, 49.95)
+complexS2
+
+#power of diagnosis and verbalIQ1
+complexS3 = powerSim(complexMUSV, test = fixed("Diagnosis:scaled_verbalIQ"), nsim = 1000, seed = 1, progress = F) # 93.20% (91.46, 94.68)
+complexS3
+
+###Power curve###
+
+##extending data
+complexMUSV <- extend(complexMUSV, along = "Child.ID", n = 250)
+
+##plotting power curve
+
+#visit:Diagnosis
+PC1= powerCurve(complexMUSV, test = fixed("Visit:Diagnosis"), along = "Child.ID", nsim = 1000, breaks = seq(from = 5, to = 40, by = 5), seed = 1, progress = F)
+plot(PC1)
+
+#visit:verbalIQ1
+PC2= powerCurve(complexMUSV, test = fixed("Visit:scaled_verbalIQ"), along = "Child.ID", nsim = 1000, breaks = seq(from = 30, to = 150, by = 30), seed = 1, progress = F)
+plot(PC2)
+
+#diagnosis:verbalIQ1
+PC3 = powerCurve(complexMUSV, test = fixed("Diagnosis:scaled_verbalIQ"), along = "Child.ID", nsim = 1000, breaks = seq(from = 5, to = 50, by = 10), seed = 1, progress = F)
+plot(PC3)
+```
+
+
+### Exercise 2
+
+<!-- How would you perform a more conservative power analysis? -->
+<!-- - Identify and justify a minimum effect size for each of your relevant effects -->
+<!-- - take the model from exercise 1 and replace the effects with the minimum effect size that you'd accept. -->
+<!-- - assess the power curve by Child.ID, identifying an ideal number of participants to estimate each effect -->
+<!-- - if your power estimates do not reach an acceptable threshold simulate additional participants and repeat the previous analysis -->
+<!-- - Report the power analysis and comment on what you can (or cannot) use its estimates for. -->
+
+```{r, cache=TRUE}
+### conservative power analysis - setting manually threshold for fixed effect of interaction
+
+complexMUSV <- extend(complexMUSV, along = "Child.ID", n = 600)
+describe(comp_data)
+
+#creating new model for setting minimum efffect size
+complexMUSV_e <- complexMUSV
+
+##power of visit:diagnosis
+fixef(complexMUSV_e)["Visit:DiagnosisTD"] <- 0.1
+powerSim(complexMUSV_e, test = fixed("Visit:Diagnosis"), nsim = 1000, seed = 1, progress = F)# 77.20% (74.47, 79.77)
+PCF1 = powerCurve(complexMUSV_e, test = fixed("Visit:Diagnosis"), along = "Child.ID", nsim = 1000, breaks = seq(from = 10, to = 100, by = 10), seed = 1, progress = F)
+plot(PCF1)
+
+##power of visit:verbalIQ1
+fixef(complexMUSV_e)["Visit:scaled_verbalIQ"] <- 0.1
+powerSim(complexMUSV_e, test = fixed("Visit:scaled_verbalIQ"), nsim = 1000, progress = F) #  100.0% (99.63, 100.0)
+PCF2 = powerCurve(complexMUSV_e, test = fixed("Visit:scaled_verbalIQ"), along = "Child.ID", nsim = 1000, breaks = seq(from = 5, to = 40, by = 5), seed = 1, progress = F)
+plot(PCF2)
+
+##power of Diagnosis:verbalIQ1
+fixef(complexMUSV_e)["DiagnosisTD:scaled_verbalIQ"] <- 0.1
+powerSim(complexMUSV_e, test = fixed("Diagnosis:scaled_verbalIQ"), nsim = 1000, progress = F) # 17.70% (15.38, 20.21)
+PCF3 = powerCurve(complexMUSV_e, test = fixed("Diagnosis:scaled_verbalIQ"), along = "Child.ID", nsim = 1000, breaks = seq(from = 100, to = 500, by = 50), seed = 1, progress = F)
+plot(PCF3)
+```
+
+
+### Exercise 3
+
+<!-- Assume you have only the resources to collect 30 kids (15 with ASD and 15 TDs). Identify the power for each relevant effect and discuss whether it's worth to run the study and why -->
+
+```{r cache = TRUE}
+##getting power for 30 participants
+#visit:diagnosis
+P30_1 = powerCurve(complexMUSV, test = fixed("Visit:Diagnosis"), along = "Child.ID", nsim = 1000, breaks = seq(from = 1, to = 59, by = 29), seed = 1, progress = F) #100.0% (99.63, 100.0)
+P30_1
+
+#visit:verbalIQ
+P30_2 = powerCurve(complexMUSV, test = fixed("Visit:scaled_verbalIQ"), along = "Child.ID", nsim = 1000, breaks = seq(from = 30, to = 180, by = 30), seed = 1, progress = F) #26.30% (23.59, 29.15)
+P30_2
+
+#diagnosis:verbalIQ
+P30_3 = powerCurve(complexMUSV, test = fixed("Diagnosis:scaled_verbalIQ"), along = "Child.ID", nsim = 1000, breaks = seq(from = 1, to = 59, by = 29), seed = 1, progress = F) # 76.20% (73.44, 78.81)
+P30_3
+```
+
+
 
 
 
