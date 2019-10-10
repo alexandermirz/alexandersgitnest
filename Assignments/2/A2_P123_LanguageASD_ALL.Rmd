@@ -683,7 +683,7 @@ complexS1=powerSim(complexMUSV, test = fixed("Visit:Diagnosis"), nsim = 1000, se
 complexS1
 
 #power of visit:verbalIQ1
-complexS2=powerSim(complexMUSV, test = fixed("Visit:scaled_verbalIQ"), nsim = 1000, seed = 1, progress = F) # 46.80% (43.67, 49.95)
+complexS2=powerSim(complexMUSV, test = fixed("Visit:scaled_verbalIQ"), nsim = 10, seed = 1, progress = T) # 46.80% (43.67, 49.95)
 complexS2
 
 #power of diagnosis and verbalIQ1
@@ -702,7 +702,7 @@ PC1= powerCurve(complexMUSV, test = fixed("Visit:Diagnosis"), along = "Child.ID"
 plot(PC1)
 
 #visit:verbalIQ1
-PC2= powerCurve(complexMUSV, test = fixed("Visit:scaled_verbalIQ"), along = "Child.ID", nsim = 1000, breaks = seq(from = 30, to = 150, by = 30), seed = 1, progress = F)
+PC2= powerCurve(complexMUSV, test = fixed("Visit:scaled_verbalIQ"), along = "Child.ID", nsim = 10, breaks = seq(from = 30, to = 150, by = 30), seed = 1, progress = T)
 plot(PC2)
 
 #diagnosis:verbalIQ1
@@ -736,9 +736,9 @@ PCF1 = powerCurve(complexMUSV_e, test = fixed("Visit:Diagnosis"), along = "Child
 plot(PCF1)
 
 ##power of visit:verbalIQ1
-fixef(complexMUSV_e)["Visit:scaled_verbalIQ"] <- 0.08
+fixef(complexMUSV_e)["Visit:scaled_verbalIQ"] <- 0.005
 powerSim(complexMUSV_e, test = fixed("Visit:scaled_verbalIQ"), nsim = 10, progress = T) #  100.0% (99.63, 100.0) #48% (37.9, 58.22)
-PCF2 = powerCurve(complexMUSV_e, test = fixed("Visit:scaled_verbalIQ"), along = "Child.ID", nsim = 10, breaks = seq(from = 5, to = 100, by = 5), seed = 1, progress = T)
+PCF2 = powerCurve(complexMUSV_e, test = fixed("Visit:scaled_verbalIQ"), along = "Child.ID", nsim = 10, breaks = seq(from = 100, to = 1000, by = 100), seed = 1, progress = T)
 plot(PCF2)
 
 ##power of Diagnosis:verbalIQ1
