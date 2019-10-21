@@ -263,30 +263,30 @@ demo_art_pitch2 <-
   read.csv("demo_art_pitch.csv", header = TRUE, sep = ",")
 
 # extracting all rows with missing values
-demo_art_pitch_clean <- 
+demo_art_pitch2 <- 
   demo_art_pitch2 %>%
   na.omit(nsyll, npause, dur..s., phonationtime..s.)
 
 # how many with each diagnosis?
-demo_art_pitch_clean %>% 
+demo_art_pitch2 %>% 
   group_by(diagnosis) %>% 
   count()
 
 # how many belonging to each gender within diagnosed/no diagnosis
-demo_art_pitch_clean %>% 
+demo_art_pitch2 %>% 
   group_by(diagnosis) %>% 
   count(Gender)
 
 # age distribution & more for the whole dataset
-demo_art_pitch_clean %>% 
+demo_art_pitch2 %>% 
   describe()
 
 # means and summary for each group (including symptom severity)
-demo_art_pitch_clean %>% 
+demo_art_pitch2 %>% 
   filter(diagnosis==0) %>% 
   summary()
 
-demo_art_pitch_clean %>% 
+demo_art_pitch2 %>% 
   filter(diagnosis==1) %>% 
   summary()
 #very balanced means... 
@@ -308,10 +308,6 @@ demo_art_pitch2 %>%
   filter(study==4) %>% 
   summary()
 
-
-
-
-
 ```
 
 ## Now we can analyze the data
@@ -331,6 +327,34 @@ N.N.N.B. If you want to estimate the studies separately, you can try this syntax
 - Bonus points: cross-validate the models and report the betas and standard errors from all rounds to get an idea of how robust the estimates are. 
 
 ```{r}
+pacman::p_load(lme4, tidyverse)
+
+
+# fixing the IDs so that no participant name will occur for more than one participant:
+demo_art_pitch2 = demo_art_pitch2 %>% 
+  mutate(uPairID = paste(subject, study, sep="_"),  #Unique pair ID
+  uPairID = as.numeric(as.factor(uPairID)),
+  uID = paste(subject, study, diagnosis, sep="_"), #unique ID.
+  uID = as.numeric(as.factor(uID)))
+
+# scaling iqr:
+demo_art_pitch2 = mutate(demo_art_pitch2, scaled_iqr=((demo_art_pitch2$iqr-mean(demo_art_pitch2$iqr))/sd(demo_art_pitch2$iqr)))
+
+ model_pitch <-
+  lmer(scaled_iqr ~ diagnosis + (1|uID), demo_art_pitch2, REML = FALSE)
+  
+summary(model_pitch)
+
+model_pitch0 <- 
+  lmer(scaled_iqr ~ 1 + (1|uID), demo_art_pitch2, REML = FALSE)
+
+anova(model_pitch, model_pitch0)
+
+model_
+
+
+
+
 
 ```
 
