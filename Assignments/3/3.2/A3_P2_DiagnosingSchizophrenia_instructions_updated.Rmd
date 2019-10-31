@@ -1,0 +1,265 @@
+---
+title: "Assignment 3 - Part 2 - Diagnosing Schizophrenia from Voice"
+author: "Riccardo Fusaroli"
+date: "October 17, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Assignment 3 - Part 2 - Diagnosing schizophrenia from voice
+
+In the previous part of the assignment you generated a bunch of "features", that is, of quantitative descriptors of voice in schizophrenia. We then looked at whether we could replicate results from the previous literature.
+We now want to know whether we can automatically diagnose schizophrenia from voice only, that is, relying on the set of features you produced last time, we will try to produce an automated classifier.
+Again, remember that the dataset containst 7 studies and 3 languages. Feel free to only include Danish (Study 1-4) if you feel that adds too much complexity.
+
+Issues to be discussed your report:
+- Should you run the analysis on all languages/studies at the same time? 
+- Choose your best acoustic feature from part 1. How well can you diagnose schizophrenia just using it?
+- Identify the best combination of acoustic features to diagnose schizophrenia using logistic regression.
+- Discuss the "classification" process: which methods are you using? Which confounds should you be aware of? What are the strength and limitation of the analysis?
+- Bonus question: Logistic regression is only one of many classification algorithms. Try using others and compare performance. Some examples: Discriminant Function, Random Forest, Support Vector Machine, etc. The package caret provides them. 
+- Bonus Bonus question: It is possible combine the output of multiple  classification models to improve classification accuracy. For inspiration see,
+https://machinelearningmastery.com/machine-learning-ensembles-with-r/
+ The interested reader might also want to look up 'The BigChaos Solution to the Netflix Grand Prize'
+
+## Learning objectives
+- Learn the basics of classification in a machine learning framework
+- Design, fit and report logistic regressions
+- Apply feature selection techniques
+
+### Let's start
+
+We first want to build a logistic regression to see whether you can diagnose schizophrenia from your best acoustic feature. Let's use the full dataset and calculate the different performance measures (accuracy, sensitivity, specificity, PPV, NPV, ROC curve). You need to think carefully as to how we should (or not) use study and subject ID.
+
+Then cross-validate the logistic regression and re-calculate performance on the testing folds. N.B. The cross-validation functions you already have should be tweaked: you need to calculate these new performance measures. Alternatively, the groupdata2 and cvms package created by Ludvig are an easy solution. 
+
+N.B. the predict() function generates log odds (the full scale between minus and plus infinity). Log odds > 0 indicates a choice of 1, below a choice of 0.
+N.N.B. you need to decide whether calculate performance on each single test fold or save all the prediction for test folds in one datase, so to calculate overall performance.
+N.N.N.B. Now you have two levels of structure: subject and study. Should this impact your cross-validation?
+N.N.N.N.B. A more advanced solution could rely on the tidymodels set of packages (warning: Time-consuming to learn as the documentation is sparse, but totally worth it)
+
+.N.N.N.B. A more advanced solution could rely on the tidymodels set of packages (warning: Time-consuming to learn as the documentation is sparse, but totally worth it)
+
+
+
+```{r}
+###data&package
+pacman::p_load(tidyverse, tidymodels, ggplot2, groupdata2, parsnip, randomForest, C50)
+df <- read.csv(file="C:/Users/Kuba/OneDrive - Aarhus universitet/Dokumenter/alexandersgitnest/Assignments/3/3.1/demo_art_pitch_danish")
+data <- df
+
+# deleting unnecessary columns (uID must be preserved for multiple cross-validation, how to do it??)
+data[,c(1,2,6,8,10,11,12,13,14,15,20,28,29,30,31,32,34)] <- NULL
+
+#deleting rows with NA in Age
+#data <- filter(data, !is.na(data$Age))
+data$diagnosis<- as.factor(data$diagnosis)
+#data$Age <- as.factor(data$Age)
+
+
+
+### partioning into test and trainig
+set.seed(5)#setting to have random random always the same
+
+df_list <- partition(data, p = 0.2, cat_col = c("diagnosis"), id_col = NULL, list_out = T)
+df_test = df_list[[1]]
+df_train = df_list[[2]]
+
+
+
+# for (i in 1:4){
+#   study=data$study %>% 
+#     stats::filter(data,study==i)
+#   opskrift <- study %>% recipe(diagnosis ~ .) %>% # defines the outcome
+#   step_center(all_numeric()) %>%
+#   step_scale(all_numeric()) %>% # scales numeric predictors
+#   step_corr(all_numeric()) %>%
+#   check_missing(everything()) %>%
+#   prep(training = df_train)
+#   return(opskrift)
+# }
+### opskrift (in danish recipe)
+opskrift <- df_train %>% recipe(diagnosis ~ .) %>% # defines the outcome
+  step_center(all_numeric()) %>%
+  step_scale(all_numeric()) %>% # scales numeric predictors
+  step_corr(all_numeric()) %>% 
+  check_missing(everything()) %>%
+  prep(training = df_train)
+
+
+#inspecting what we have done
+train_baked <- juice(opskrift) # extract df_train from rec
+test_baked <- opskrift %>% bake(df_test)
+
+
+### creating models ###
+
+## linear regression
+m_lg <- 
+  logistic_reg() %>%
+  set_mode("classification") %>% 
+  set_engine("glm") %>%
+  fit(diagnosis ~ . , data = train_baked)
+
+## support vector machine
+m_svm <-
+  svm_rbf() %>%
+  set_mode("classification") %>% 
+  set_engine("kernlab") %>%
+  fit(diagnosis ~ . , data = train_baked)
+
+## random forest
+m_rf <- 
+  rand_forest() %>% 
+  set_mode("classification") %>% 
+  set_engine("randomForest") %>% 
+  fit(diagnosis ~ . , data=train_baked)
+
+## boost tree
+m_bt <- 
+  boost_tree() %>% 
+  set_mode("classification") %>% 
+  set_engine("C5.0") %>% 
+  fit(diagnosis ~ . , data=train_baked)
+
+
+### applying model to test set ###
+
+## getting probabilities of 4 models at once
+test_results <- 
+  test_baked %>% 
+  select(diagnosis) %>% 
+  mutate(
+    lr_class = predict(m_lr, new_data = test_baked) %>% 
+      pull(),
+    lr_prob  = predict(m_lr, new_data = test_baked, type = "prob") %>% 
+      pull(),
+    svm_class = predict(m_svm, new_data = test_baked) %>% 
+      pull(),
+    svm_prob  = predict(m_svm, new_data = test_baked, type = "prob") %>% 
+      pull(),
+    rf_class = predict(m_rf, new_data = test_baked) %>% 
+      pull(),
+    rf_prob  = predict(m_rf, new_data = test_baked, type = "prob") %>% 
+      pull(),
+    bt_class = predict(m_bt, new_data = test_baked) %>% 
+      pull(),
+    bt_prob  = predict(m_bt, new_data = test_baked, type = "prob") %>% 
+      pull()
+  )
+## checking the probabilities
+test_results %>% 
+  head(20) %>% 
+  knitr::kable() 
+
+
+### Performance metrics ###
+
+## getting accuracy and plotting roc curve
+
+# linear regression
+metrics(test_results, truth = diagnosis, estimate = lr_class) 
+
+test_results %>% 
+  mutate(lr_prob = 1 - lr_prob) %>% # for the plot to show correctly (otherwise the line would be flipped)
+  gain_curve(truth = diagnosis, lr_prob) %>% 
+  autoplot()
+
+# support vect machine
+metrics(test_results, truth = diagnosis, estimate = svm_class) 
+test_results %>% 
+  mutate(svm_prob = 1 - svm_prob) %>% # for the plot to show correctly (otherwise the line would be flipped)
+  gain_curve(truth = diagnosis, svm_prob) %>% 
+  autoplot()
+
+# random forest
+metrics(test_results, truth = diagnosis, estimate = rf_class) 
+test_results %>% 
+  mutate(rf_prob = 1 - rf_prob) %>% # for the plot to show correctly (otherwise the line would be flipped)
+  gain_curve(truth = diagnosis, rf_prob) %>% 
+  autoplot()
+
+# boost tree
+metrics(test_results, truth = diagnosis, estimate = bt_class) 
+test_results %>% 
+  mutate(bt_prob = 1 - bt_prob) %>% # for the plot to show correctly (otherwise the line would be flipped)
+  gain_curve(truth = diagnosis, bt_prob) %>% 
+  autoplot()
+
+
+### Multiple cross validation ###
+cv_folds <- vfold_cv(train_baked, v = 10, repeats = 10, strata = diagnosis, group=diagnosis)
+
+#in the Kenneth's guide is written to take into accout also ID (so data of the same participant are not in the training and test datasets simultaneously). That makes perfectly sense. But We deleted the ID column at the beginning so our models don't use it as a predictor. But once excluded, how to bring them back again, without having them in our previous models???
+
+```
+
+
+
+
+
+
+
+
+
+
+```{r}
+###data&package
+pacman::p_load(tidymodels, ggplot2, groupdata2)
+df <- read.csv(file="C:/Users/Kuba/OneDrive - Aarhus universitet/Dokumenter/alexandersgitnest/Assignments/3/3.1/demo_art_pitch_danish")
+data <- df
+data[,c(1,2,6,8,9,10,11,12,13,14,34)] <- NULL
+data$diagnosis <- as.character(data$diagnosis)
+data$diagnosis <- as.factor(data$diagnosis)
+
+
+### partioning into test and trainig
+set.seed(5)#setting to have random random always the same
+
+df_list <- partition(data, p = 0.2, cat_col = c("diagnosis"), id_col = NULL, list_out = T)
+df_test = df_list[[1]]
+df_train = df_list[[2]]
+
+
+###opskrift (in danish recipe)
+# for (i in 1:4){
+#   study=data$study %>% 
+#     stats::filter(data,study==i)
+#   opskrift <- study %>% recipe(diagnosis ~ .) %>% # defines the outcome
+#   step_center(all_numeric()) %>%
+#   step_scale(all_numeric()) %>% # scales numeric predictors
+#   step_corr(all_numeric()) %>%
+#   check_missing(everything()) %>%
+#   prep(training = df_train)
+#   return(opskrift)
+# }
+
+opskrift <- df_train %>% recipe(diagnosis ~ .) %>% # defines the outcome
+  step_center(all_numeric()) %>%
+  step_scale(all_numeric()) %>% # scales numeric predictors
+  step_corr(all_numeric()) %>% 
+  check_missing(everything()) %>%
+  prep(training = df_train)
+
+
+
+###inspecting what we have done###
+train_baked <- juice(opskrift) # extract df_train from rec
+test_baked <- opskrift %>% bake(df_test)
+
+
+###creating models###
+
+##linear regression
+m_lr <- 
+  logistic_reg() %>%
+  set_mode("classification") %>% 
+  set_engine("glm") %>%
+  fit(diagnosis ~ . , data = train_baked, maxit = 200)
+
+
+
+
