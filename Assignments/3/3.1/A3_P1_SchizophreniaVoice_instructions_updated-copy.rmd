@@ -281,21 +281,47 @@ demo_art_pitch2 %>%
 #very balanced means... 
   
 # doing the same for study and diagnosis
+####### EXECUTE THESE AND OBTAIN INFO
 demo_art_pitch2 %>% 
   filter(study==1) %>% 
+  filter(diagnosis==0) %>% 
   summary()
 
-demo_art_pitch_clean %>% 
+demo_art_pitch2 %>% 
+  filter(study==1) %>% 
+  filter(diagnosis==1) %>% 
+  summary()
+
+demo_art_pitch2 %>% 
   filter(study==2) %>% 
+   filter(diagnosis==0) %>% 
   summary()
 
 demo_art_pitch2 %>% 
-  filter(study==3) %>% 
+  filter(study==2) %>% 
+  filter(diagnosis==1) %>% 
   summary()
 
 demo_art_pitch2 %>% 
-  filter(study==4) %>% 
+  filter(study==3) %>%
+  filter(diagnosis==0) %>% 
   summary()
+
+demo_art_pitch2 %>% 
+  filter(study==3) %>%
+  filter(diagnosis==1) %>% 
+  summary()
+
+demo_art_pitch2 %>% 
+  filter(study==4) %>%
+  filter(diagnosis==0) %>% 
+  summary()
+
+demo_art_pitch2 %>% 
+  filter(study==4) %>%
+  filter(diagnosis==1) %>% 
+  summary()
+
 
 ```
 
