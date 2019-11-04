@@ -48,7 +48,7 @@ N.N.N.N.B. A more advanced solution could rely on the tidymodels set of packages
 ```{r}
 ###data&package
 pacman::p_load(tidyverse, tidymodels, ggplot2, groupdata2, parsnip, randomForest, C50)
-df <- read.csv(file="C:/Users/Kuba/OneDrive - Aarhus universitet/Dokumenter/alexandersgitnest/Assignments/3/3.1/demo_art_pitch_danish")
+df <- read.csv(file="~/alexandersgitnest/Assignments/3/3.1/demo_art_pitch_danish")
 data <- df
 
 # deleting unnecessary columns (uID must be preserved for multiple cross-validation, how to do it??)
@@ -128,27 +128,37 @@ m_bt <-
 
 ### applying model to test set ###
 
+
+## Predicting class
+log_class <-  m_lr %>% 
+  predict(new_data=test_baked) 
+## prob. of class:
+log_prop <- m_lr %>% 
+  predict(new_data=test_baked, type = "prob") %>% 
+  pull(.pred_1)
+
+
 ## getting probabilities of 4 models at once
 test_results <- 
   test_baked %>% 
   select(diagnosis) %>% 
   mutate(
     lr_class = predict(m_lr, new_data = test_baked) %>% 
-      pull(),
+      pull(.pred_class),
     lr_prob  = predict(m_lr, new_data = test_baked, type = "prob") %>% 
-      pull(),
+      pull(.pred_1),
     svm_class = predict(m_svm, new_data = test_baked) %>% 
-      pull(),
+      pull(.pred_class),
     svm_prob  = predict(m_svm, new_data = test_baked, type = "prob") %>% 
-      pull(),
+      pull(.pred_1),
     rf_class = predict(m_rf, new_data = test_baked) %>% 
-      pull(),
+      pull(.pred_class),
     rf_prob  = predict(m_rf, new_data = test_baked, type = "prob") %>% 
-      pull(),
+      pull(.pred_1),
     bt_class = predict(m_bt, new_data = test_baked) %>% 
-      pull(),
+      pull(.pred_class),
     bt_prob  = predict(m_bt, new_data = test_baked, type = "prob") %>% 
-      pull() # I left all pulls empty as it didn't work with any argument I tried
+      pull(.pred_1) # I left all pulls empty as it didn't work with any argument I tried
   )
 ## checking the probabilities
 test_results %>% 
@@ -191,6 +201,7 @@ test_results %>%
 
 # boost tree
 metrics(test_results, truth = diagnosis, estimate = bt_class) 
+
 test_results %>% 
   mutate(bt_prob = 1 - bt_prob) %>% # for the plot to show correctly (otherwise the line would be flipped)
   gain_curve(truth = diagnosis, bt_prob) %>% 
@@ -198,47 +209,47 @@ test_results %>%
 
 #################################
 #redefining df_train and df_test by adding uID column!
-df_list2 <- partition(df, p = 0.2, cat_col = c("diagnosis"), list_out = TRUE)
-df_test = df_list2[[1]]
-df_train = df_list2[[2]]
-
-
-df_test[,c(1,2,6,8,10,11,12,13,14,15,20,28,30,31,32,34)] <- NULL
-df_test2$diagnosis <- as.factor(df_test2$diagnosis)
-
-df_train[,c(1,2,6,8,10,11,12,13,14,15,20,28,30,31,32,34)] <- NULL
-df_train2$diagnosis <- as.factor(df_train2$diagnosis)
+# df_list2 <- partition(df, p = 0.2, cat_col = c("diagnosis"), list_out = TRUE)
+# df_test = df_list2[[1]]
+# df_train = df_list2[[2]]
+# 
+# 
+# df_test[,c(1,2,6,8,10,11,12,13,14,15,20,28,30,31,32,34)] <- NULL
+# df_test2$diagnosis <- as.factor(df_test2$diagnosis)
+# 
+# df_train[,c(1,2,6,8,10,11,12,13,14,15,20,28,30,31,32,34)] <- NULL
+# df_train2$diagnosis <- as.factor(df_train2$diagnosis)
 #################################
 
 ### Multiple cross validation ###
 
 ## creating dataframe with id again
-df_list2 <- partition(df, p = 0.2, cat_col = c("diagnosis"), list_out = TRUE)
-df_test = df_list2[[1]]
-df_train = df_list2[[2]]
+# df_list2 <- partition(df, p = 0.2, cat_col = c("diagnosis"), list_out = TRUE)
+# df_test = df_list2[[1]]
+# df_train = df_list2[[2]]
 
-df_train3 <- merge(df_train, df_train2, by=c("mean", "pause_duration"), all.y=TRUE)
+# df_train3 <- merge(df_train, df_train2, by=c("mean", "pause_duration"), all.y=TRUE)
+# 
+# df_test[,c(1,2,6,8,10,11,12,13,14,15,20,28,30,31,32,34)] <- NULL
+# df_test2$diagnosis <- as.factor(df_test2$diagnosis)
+# 
+# df_train[,c(1,2,6,8,10,11,12,13,14,15,20,28,30,31,32,34)] <- NULL
+# df_train2$diagnosis <- as.factor(df_train2$diagnosis)
 
-df_test[,c(1,2,6,8,10,11,12,13,14,15,20,28,30,31,32,34)] <- NULL
-df_test2$diagnosis <- as.factor(df_test2$diagnosis)
-
-df_train[,c(1,2,6,8,10,11,12,13,14,15,20,28,30,31,32,34)] <- NULL
-df_train2$diagnosis <- as.factor(df_train2$diagnosis)
-
-opskrift2 <- df_train2 %>% recipe(diagnosis ~ .) %>% # defines the outcome
-  step_center(all_numeric()) %>%
-  step_scale(all_numeric()) %>% # scales numeric predictors
-  step_corr(all_numeric()) %>% 
-  check_missing(everything()) %>%
-  prep(training = df_train2)
+# opskrift2 <- df_train2 %>% recipe(diagnosis ~ .) %>% # defines the outcome
+#   step_center(all_numeric()) %>%
+#   step_scale(all_numeric()) %>% # scales numeric predictors
+#   step_corr(all_numeric()) %>% 
+#   check_missing(everything()) %>%
+#   prep(training = df_train2)
 
 
 #inspecting what we have done
-train_baked2 <- juice(opskrift2) # extract df_train from rec
-test_baked2 <- opskrift2 %>% bake(df_test2)
+# train_baked2 <- juice(opskrift2) # extract df_train from rec
+# test_baked2 <- opskrift2 %>% bake(df_test2)
 
 
-cv_folds <- vfold_cv(df_test2, v = 10, repeats = 10, strata = diagnosis, group=uID)
+cv_folds <- vfold_cv(df_test, v = 10, repeats = 10, strata = diagnosis, group=uID)
 
 cv_folds <- cv_folds %>% 
   mutate(recipes = splits %>%
@@ -269,18 +280,29 @@ predict_log <- function(split, rec, model) {
     # 
   # OUT
     # a tibble of the actual and predicted results
-  baked_test <- bake(opskrift2, testing(split))
+  baked_test <- bake(opskrift, testing(split))
   tibble(
     actual = baked_test$diagnosis,
     predicted = predict(model, new_data = baked_test) %>% pull(.pred_class),
-    prop_diag =  predict(model, new_data = baked_test, type = "prob") %>% pull(.pred_diagnosis),
-    prop_no_diag =  predict(model, new_data = baked_test, type = "prob") %>% pull(`.pred_no_diagnosis`)
+    prop_diag =  predict(model, new_data = baked_test, type = "prob") %>% pull(.pred_1),
+    prop_no_diag =  predict(model, new_data = baked_test, type = "prob") %>% pull(`.pred_0`)
   ) 
 }
 
 # apply our function to each split, which their respective recipes and models (in this case log fits) and save it to a new col
 cv_folds <- cv_folds %>% 
   mutate(pred = pmap(list(splits, recipes, log_fits), predict_log))
+
+
+
+## Evaluating performance metrics:
+evaluation <- 
+  cv_folds %>% 
+  mutate(
+    metrics = pmap(list(pred), ~ metrics(., truth = actual, estimate = predicted, prop_diag))) %>% 
+  select(id, id2, metrics) %>% 
+  unnest(metrics)
+
 
 #in the Kenneth's guide is written to take into accout also ID (so data of the same participant are not in the training and test datasets simultaneously). That makes perfectly sense. But We deleted the ID column at the beginning so our models don't use it as a predictor. But once excluded, how to bring them back again, without having them in our previous models???
 
