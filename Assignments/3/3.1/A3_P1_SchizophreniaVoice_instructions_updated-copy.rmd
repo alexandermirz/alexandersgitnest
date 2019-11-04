@@ -285,42 +285,76 @@ demo_art_pitch2 %>%
 demo_art_pitch2 %>% 
   filter(study==1) %>% 
   filter(diagnosis==0) %>% 
-  summary()
+  describe()
+
+demo_art_pitch2 %>% 
+  filter(study==1) %>% 
+  filter(diagnosis==0) %>% 
+  count(Gender)
+
+demo_art_pitch2 %>% 
+  group_by(subject) %>% 
+  filter(study==1) %>% 
+  filter(diagnosis==0) %>% 
+  count(Gender)
+
+x=1
+extract <- function(x){
+  data=filter(demo_art_pitch2, study==x)
+  data. <- data[!duplicated(data[2]),]
+  data.$Gender <- as.character(data.$Gender)
+  amount=length(data.$subject)
+  gender_data <- data.frame()
+  for (i in data.$subject){
+    dat=filter(data., subject==i)
+    gender=dat$Gender
+    gender_data <- as.data.frame(c(gender_data, gender))
+  }
+  
+  
+  
+  
+  
+  comp_info=as.data.frame(cbind(count(gender_data$), amount, ))
+  sum=
+ return(comp_info) 
+}
+amount
 
 demo_art_pitch2 %>% 
   filter(study==1) %>% 
   filter(diagnosis==1) %>% 
-  summary()
+  describe()
 
 demo_art_pitch2 %>% 
   filter(study==2) %>% 
-   filter(diagnosis==0) %>% 
-  summary()
+  filter(diagnosis==0) %>% 
+  describe()
 
 demo_art_pitch2 %>% 
   filter(study==2) %>% 
   filter(diagnosis==1) %>% 
-  summary()
+  describe()
 
 demo_art_pitch2 %>% 
   filter(study==3) %>%
   filter(diagnosis==0) %>% 
-  summary()
+  describe()
 
 demo_art_pitch2 %>% 
   filter(study==3) %>%
   filter(diagnosis==1) %>% 
-  summary()
+  describe()
 
 demo_art_pitch2 %>% 
   filter(study==4) %>%
   filter(diagnosis==0) %>% 
-  summary()
+  describe()
 
 demo_art_pitch2 %>% 
   filter(study==4) %>%
   filter(diagnosis==1) %>% 
-  summary()
+  describe()
 
 
 ```
