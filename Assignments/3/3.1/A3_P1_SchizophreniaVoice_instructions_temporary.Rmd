@@ -108,7 +108,9 @@ See placeholder code here for help.
 
 ```{r}
 library(pacman)
-pacman::p_load(tidyverse, readr, psych)
+pacman::p_load(tidyverse, readr, psych, lme4)
+
+
 
 read_pitch <- function(filename) {
     ## parse filename to extract study, diagnosis, subject and trial
@@ -250,9 +252,9 @@ demo_art_pitch2 <-
   read.csv("demo_art_pitch.csv", header = TRUE, sep = ",")
 
 # extracting all rows with missing values
-demo_art_pitch2 <- 
-  demo_art_pitch2 %>%
-  na.omit(nsyll, npause, dur..s., phonationtime..s.)
+#demo_art_pitch2 <- 
+ # demo_art_pitch2 %>%
+  #na.omit(nsyll, npause, dur..s., phonationtime..s.)
 
 # how many with each diagnosis?
 demo_art_pitch2 %>% 
@@ -279,21 +281,47 @@ demo_art_pitch2 %>%
 #very balanced means... 
   
 # doing the same for study and diagnosis
+####### EXECUTE THESE AND OBTAIN INFO
 demo_art_pitch2 %>% 
   filter(study==1) %>% 
+  filter(diagnosis==0) %>% 
   summary()
 
-demo_art_pitch_clean %>% 
+demo_art_pitch2 %>% 
+  filter(study==1) %>% 
+  filter(diagnosis==1) %>% 
+  summary()
+
+demo_art_pitch2 %>% 
   filter(study==2) %>% 
+   filter(diagnosis==0) %>% 
   summary()
 
 demo_art_pitch2 %>% 
-  filter(study==3) %>% 
+  filter(study==2) %>% 
+  filter(diagnosis==1) %>% 
   summary()
 
 demo_art_pitch2 %>% 
-  filter(study==4) %>% 
+  filter(study==3) %>%
+  filter(diagnosis==0) %>% 
   summary()
+
+demo_art_pitch2 %>% 
+  filter(study==3) %>%
+  filter(diagnosis==1) %>% 
+  summary()
+
+demo_art_pitch2 %>% 
+  filter(study==4) %>%
+  filter(diagnosis==0) %>% 
+  summary()
+
+demo_art_pitch2 %>% 
+  filter(study==4) %>%
+  filter(diagnosis==1) %>% 
+  summary()
+
 
 ```
 
@@ -315,34 +343,14 @@ N.N.N.B. If you want to estimate the studies separately, you can try this syntax
 - Bonus points: cross-validate the models and report the betas and standard errors from all rounds to get an idea of how robust the estimates are. 
 
 ```{r}
-library(pacman)
-pacman::p_load(tidyverse, readr, psych)
-
-
    set.seed(1)
    x <- runif(7)
 
    # Manually scaling
    (x - mean(x)) / sd(x)
-
-   scale(x)
+demo_art_pitch2 <- mutate(dmeo_art_pitch2)
    
-scaled <- function(var){
-  data=demo_art_pitch2 %>% 
-    filter(study==1)
-  scaled=data$var %>% scale()
-  info <- as.data.frame(cbind(data, scaled))
-  return(info)
-}
-
-sc1 <- scaled(iqr)
-
-
-scaled_studies <- rbind(scaled(1, variable), scaled(2), scaled(3), scaled(4))
-   
-
-
-   # fixing the IDs so that no participant name will occur for more than one participant:
+# fixing the IDs so that no participant name will occur for more than one participant:
 demo_art_pitch2 = demo_art_pitch2 %>% 
   mutate(uPairID = paste(subject, study, sep="_"),  #Unique pair ID
   uPairID = as.numeric(as.factor(uPairID)),
@@ -352,13 +360,35 @@ demo_art_pitch2 = demo_art_pitch2 %>%
 # scaling iqr:
 demo_art_pitch2 = mutate(demo_art_pitch2, scaled_iqr=((demo_art_pitch2$iqr-mean(demo_art_pitch2$iqr))/sd(demo_art_pitch2$iqr)))
 
- model_pitch <-
-  lmer(scaled_iqr ~ diagnosis + (1|uID), demo_art_pitch2, REML = FALSE)
-  
-summary(model_pitch)
 
-model_pitch0 <- 
-  lmer(scaled_iqr ~ 1 + (1|uID), demo_art_pitch2, REML = FALSE)
+###buillding models
+
+## pitch variability
+
+
+# scaling thq iqr according to the study
+scaled <- function (num, var){
+  data=demo_art_pitch2 %>% 
+    filter(study==num)
+  scaled_iqr_study=scale(data$var)
+  info <- as.data.frame(cbind(data, scaled_iqr_study))
+  return(info)
+}
+
+scaled(1, iqr)
+
+scaled_studies <- rbind(scaled(1, "iqr"), scaled(2, iqr), scaled(3, iqr), scaled(4, iqr))
+
+#model
+m_pvar_studyscal <-
+  lmer(scaled_iqr_study ~ diagnosis+ (1|uID), scaled_studies, REML = FALSE)
+summary(m_pvar_studyscal)
+
+#because of scaling according to the study, when including the study as a parameter in the model, it has estimate of 0.1, now it has only 0.00007 -> improvement
+
+#proportion of spoken time
+
+
 
 
 
