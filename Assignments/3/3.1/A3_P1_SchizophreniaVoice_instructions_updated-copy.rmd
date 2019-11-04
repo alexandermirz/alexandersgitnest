@@ -297,7 +297,6 @@ demo_art_pitch2 %>%
   filter(study==1) %>% 
   filter(diagnosis==0) %>% 
   count(Gender)
-
 x=1
 extract <- function(x){
   data=filter(demo_art_pitch2, study==x)
