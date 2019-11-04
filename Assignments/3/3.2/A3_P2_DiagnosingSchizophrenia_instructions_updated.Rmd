@@ -98,7 +98,7 @@ test_baked <- opskrift %>% bake(df_test)
 ### creating models ###
 
 ## linear regression
-m_lg <- 
+m_lr <- 
   logistic_reg() %>%
   set_mode("classification") %>% 
   set_engine("glm") %>%
@@ -148,7 +148,7 @@ test_results <-
     bt_class = predict(m_bt, new_data = test_baked) %>% 
       pull(),
     bt_prob  = predict(m_bt, new_data = test_baked, type = "prob") %>% 
-      pull()
+      pull() # I left all pulls empty as it didn't work with any argument I tried
   )
 ## checking the probabilities
 test_results %>% 
@@ -156,9 +156,10 @@ test_results %>%
   knitr::kable() 
 
 
+
 ### Performance metrics ###
 
-## getting accuracy and plotting roc curve
+## getting accuracy, plotting roc curve, and cumulative gains curve
 
 # linear regression
 metrics(test_results, truth = diagnosis, estimate = lr_class) 
@@ -168,8 +169,13 @@ test_results %>%
   gain_curve(truth = diagnosis, lr_prob) %>% 
   autoplot()
 
+test_results %>%
+  roc_curve(truth = diagnosis, lr_prob) %>% 
+  autoplot()
+
 # support vect machine
 metrics(test_results, truth = diagnosis, estimate = svm_class) 
+
 test_results %>% 
   mutate(svm_prob = 1 - svm_prob) %>% # for the plot to show correctly (otherwise the line would be flipped)
   gain_curve(truth = diagnosis, svm_prob) %>% 
@@ -177,6 +183,7 @@ test_results %>%
 
 # random forest
 metrics(test_results, truth = diagnosis, estimate = rf_class) 
+
 test_results %>% 
   mutate(rf_prob = 1 - rf_prob) %>% # for the plot to show correctly (otherwise the line would be flipped)
   gain_curve(truth = diagnosis, rf_prob) %>% 
@@ -189,9 +196,91 @@ test_results %>%
   gain_curve(truth = diagnosis, bt_prob) %>% 
   autoplot()
 
+#################################
+#redefining df_train and df_test by adding uID column!
+df_list2 <- partition(df, p = 0.2, cat_col = c("diagnosis"), list_out = TRUE)
+df_test = df_list2[[1]]
+df_train = df_list2[[2]]
+
+
+df_test[,c(1,2,6,8,10,11,12,13,14,15,20,28,30,31,32,34)] <- NULL
+df_test2$diagnosis <- as.factor(df_test2$diagnosis)
+
+df_train[,c(1,2,6,8,10,11,12,13,14,15,20,28,30,31,32,34)] <- NULL
+df_train2$diagnosis <- as.factor(df_train2$diagnosis)
+#################################
 
 ### Multiple cross validation ###
-cv_folds <- vfold_cv(train_baked, v = 10, repeats = 10, strata = diagnosis, group=diagnosis)
+
+## creating dataframe with id again
+df_list2 <- partition(df, p = 0.2, cat_col = c("diagnosis"), list_out = TRUE)
+df_test = df_list2[[1]]
+df_train = df_list2[[2]]
+
+df_train3 <- merge(df_train, df_train2, by=c("mean", "pause_duration"), all.y=TRUE)
+
+df_test[,c(1,2,6,8,10,11,12,13,14,15,20,28,30,31,32,34)] <- NULL
+df_test2$diagnosis <- as.factor(df_test2$diagnosis)
+
+df_train[,c(1,2,6,8,10,11,12,13,14,15,20,28,30,31,32,34)] <- NULL
+df_train2$diagnosis <- as.factor(df_train2$diagnosis)
+
+opskrift2 <- df_train2 %>% recipe(diagnosis ~ .) %>% # defines the outcome
+  step_center(all_numeric()) %>%
+  step_scale(all_numeric()) %>% # scales numeric predictors
+  step_corr(all_numeric()) %>% 
+  check_missing(everything()) %>%
+  prep(training = df_train2)
+
+
+#inspecting what we have done
+train_baked2 <- juice(opskrift2) # extract df_train from rec
+test_baked2 <- opskrift2 %>% bake(df_test2)
+
+
+cv_folds <- vfold_cv(df_test2, v = 10, repeats = 10, strata = diagnosis, group=uID)
+
+cv_folds <- cv_folds %>% 
+  mutate(recipes = splits %>%
+           # prepper is a wrapper for `prep()` which handles `split` objects
+           map(prepper, recipe = opskrift),
+         train_data = splits %>% map(training))
+
+# train model of each fold
+  # create a non-fitted model
+m_lr_nfit <- 
+  logistic_reg() %>%
+  set_mode("classification") %>% 
+  set_engine("glm") 
+
+
+cv_folds <- cv_folds %>%  mutate(
+  log_fits = pmap(list(recipes, train_data), #input 
+                            ~ fit(m_lr_nfit, formula(.x), data = bake(object = .x, new_data = .y)) # function to apply
+                 ))
+
+cv_folds %>% head(5)
+
+
+predict_log <- function(split, rec, model) {
+  # IN
+    # split: a split data
+    # rec: recipe to prepare the data
+    # 
+  # OUT
+    # a tibble of the actual and predicted results
+  baked_test <- bake(opskrift2, testing(split))
+  tibble(
+    actual = baked_test$diagnosis,
+    predicted = predict(model, new_data = baked_test) %>% pull(.pred_class),
+    prop_diag =  predict(model, new_data = baked_test, type = "prob") %>% pull(.pred_diagnosis),
+    prop_no_diag =  predict(model, new_data = baked_test, type = "prob") %>% pull(`.pred_no_diagnosis`)
+  ) 
+}
+
+# apply our function to each split, which their respective recipes and models (in this case log fits) and save it to a new col
+cv_folds <- cv_folds %>% 
+  mutate(pred = pmap(list(splits, recipes, log_fits), predict_log))
 
 #in the Kenneth's guide is written to take into accout also ID (so data of the same participant are not in the training and test datasets simultaneously). That makes perfectly sense. But We deleted the ID column at the beginning so our models don't use it as a predictor. But once excluded, how to bring them back again, without having them in our previous models???
 
@@ -201,64 +290,6 @@ cv_folds <- vfold_cv(train_baked, v = 10, repeats = 10, strata = diagnosis, grou
 
 
 
-
-
-
-
-
-```{r}
-###data&package
-pacman::p_load(tidymodels, ggplot2, groupdata2)
-df <- read.csv(file="C:/Users/Kuba/OneDrive - Aarhus universitet/Dokumenter/alexandersgitnest/Assignments/3/3.1/demo_art_pitch_danish")
-data <- df
-data[,c(1,2,6,8,9,10,11,12,13,14,34)] <- NULL
-data$diagnosis <- as.character(data$diagnosis)
-data$diagnosis <- as.factor(data$diagnosis)
-
-
-### partioning into test and trainig
-set.seed(5)#setting to have random random always the same
-
-df_list <- partition(data, p = 0.2, cat_col = c("diagnosis"), id_col = NULL, list_out = T)
-df_test = df_list[[1]]
-df_train = df_list[[2]]
-
-
-###opskrift (in danish recipe)
-# for (i in 1:4){
-#   study=data$study %>% 
-#     stats::filter(data,study==i)
-#   opskrift <- study %>% recipe(diagnosis ~ .) %>% # defines the outcome
-#   step_center(all_numeric()) %>%
-#   step_scale(all_numeric()) %>% # scales numeric predictors
-#   step_corr(all_numeric()) %>%
-#   check_missing(everything()) %>%
-#   prep(training = df_train)
-#   return(opskrift)
-# }
-
-opskrift <- df_train %>% recipe(diagnosis ~ .) %>% # defines the outcome
-  step_center(all_numeric()) %>%
-  step_scale(all_numeric()) %>% # scales numeric predictors
-  step_corr(all_numeric()) %>% 
-  check_missing(everything()) %>%
-  prep(training = df_train)
-
-
-
-###inspecting what we have done###
-train_baked <- juice(opskrift) # extract df_train from rec
-test_baked <- opskrift %>% bake(df_test)
-
-
-###creating models###
-
-##linear regression
-m_lr <- 
-  logistic_reg() %>%
-  set_mode("classification") %>% 
-  set_engine("glm") %>%
-  fit(diagnosis ~ . , data = train_baked, maxit = 200)
 
 
 
