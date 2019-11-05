@@ -297,6 +297,7 @@ demo_art_pitch2 %>%
   filter(study==1) %>% 
   filter(diagnosis==0) %>% 
   count(Gender)
+
 x=1
 extract <- function(x){
   data=filter(demo_art_pitch2, study==x)
@@ -314,11 +315,16 @@ extract <- function(x){
   
   
   
-  comp_info=as.data.frame(cbind(count(gender_data$), amount, ))
-  sum=
+  comp_info=c(gender_data, amount)
+  sum=gender_data %>% 
+    subset(gender_data=="M") %>% 
+    length()
  return(comp_info) 
 }
-amount
+
+
+subset(gender_data=="M")
+
 
 demo_art_pitch2 %>% 
   filter(study==1) %>% 
