@@ -303,6 +303,11 @@ evaluation <-
   select(id, id2, metrics) %>% 
   unnest(metrics)
 
+## Inspecting: 
+eval %>% 
+  select(repeat_n = id, fold_n = id2, metric = .metric, estimate = .estimate) %>% 
+  spread(metric, estimate) %>% 
+  head()
 
 #in the Kenneth's guide is written to take into accout also ID (so data of the same participant are not in the training and test datasets simultaneously). That makes perfectly sense. But We deleted the ID column at the beginning so our models don't use it as a predictor. But once excluded, how to bring them back again, without having them in our previous models???
 
