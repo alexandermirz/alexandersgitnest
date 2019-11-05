@@ -44,31 +44,41 @@ N.N.N.N.B. A more advanced solution could rely on the tidymodels set of packages
 .N.N.N.B. A more advanced solution could rely on the tidymodels set of packages (warning: Time-consuming to learn as the documentation is sparse, but totally worth it)
 
 
-
+Data&packages, preprocessing data, models and their performance matrics
 ```{r}
-###data&package
+### data&package ###
+
 pacman::p_load(tidyverse, tidymodels, ggplot2, groupdata2, parsnip, randomForest, C50)
 df <- read.csv(file="~/alexandersgitnest/Assignments/3/3.1/demo_art_pitch_danish")
+
 data <- df
+data
 
-# deleting unnecessary columns (uID must be preserved for multiple cross-validation, how to do it??)
-data[,c(1,2,6,8,10,11,12,13,14,15,20,28,29,30,31,32,34)] <- NULL
+# deleting unnecessary columns (uID preserved)
+data[,c(1,2,6,8,10,11,12,13,14,15,20,28,30,31,32,34)] <- NULL
 
-#deleting rows with NA in Age
-#data <- filter(data, !is.na(data$Age))
+#making outcome variabel factor
 data$diagnosis<- as.factor(data$diagnosis)
-#data$Age <- as.factor(data$Age)
 
 
+### partioning into test and trainig ###
 
-### partioning into test and trainig
 set.seed(5)#setting to have random random always the same
 
-df_list <- partition(data, p = 0.2, cat_col = c("diagnosis"), id_col = NULL, list_out = T)
+df_list <- partition(data, p = 0.2, cat_col = c("diagnosis"), id_col = c("uID"), list_out = T)
 df_test = df_list[[1]]
 df_train = df_list[[2]]
 
+#saving id columns in the corresponding order to partitioned data for later analysis
+df_test_uID <- df_test[,1]
+df_test_uID
 
+df_train_uID <- df_train[,1]
+df_train_uID
+
+#deleting id columns
+df_test[,1] <- NULL
+df_train[,1] <- NULL
 
 # for (i in 1:4){
 #   study=data$study %>% 
@@ -81,7 +91,7 @@ df_train = df_list[[2]]
 #   prep(training = df_train)
 #   return(opskrift)
 # }
-### opskrift (in danish recipe)
+# opskrift (in danish recipe)
 opskrift <- df_train %>% recipe(diagnosis ~ .) %>% # defines the outcome
   step_center(all_numeric()) %>%
   step_scale(all_numeric()) %>% # scales numeric predictors
@@ -95,7 +105,7 @@ train_baked <- juice(opskrift) # extract df_train from rec
 test_baked <- opskrift %>% bake(df_test)
 
 
-### creating models ###
+### creating models using machine learning###
 
 ## linear regression
 m_lr <- 
@@ -161,15 +171,12 @@ test_results <-
       pull(.pred_1) # I left all pulls empty as it didn't work with any argument I tried
   )
 ## checking the probabilities
-test_results %>% 
-  head(20) %>% 
-  knitr::kable() 
-
+test_results
 
 
 ### Performance metrics ###
 
-## getting accuracy, plotting roc curve, and cumulative gains curve
+## getting accuracy, plotting cumulative gains curve, and roc curve
 
 # linear regression
 metrics(test_results, truth = diagnosis, estimate = lr_class) 
@@ -191,12 +198,20 @@ test_results %>%
   gain_curve(truth = diagnosis, svm_prob) %>% 
   autoplot()
 
+test_results %>%
+  roc_curve(truth = diagnosis, svm_prob) %>% 
+  autoplot()
+
 # random forest
 metrics(test_results, truth = diagnosis, estimate = rf_class) 
 
 test_results %>% 
   mutate(rf_prob = 1 - rf_prob) %>% # for the plot to show correctly (otherwise the line would be flipped)
   gain_curve(truth = diagnosis, rf_prob) %>% 
+  autoplot()
+
+test_results %>%
+  roc_curve(truth = diagnosis, rf_prob) %>% 
   autoplot()
 
 # boost tree
@@ -207,49 +222,60 @@ test_results %>%
   gain_curve(truth = diagnosis, bt_prob) %>% 
   autoplot()
 
-#################################
-#redefining df_train and df_test by adding uID column!
-# df_list2 <- partition(df, p = 0.2, cat_col = c("diagnosis"), list_out = TRUE)
-# df_test = df_list2[[1]]
-# df_train = df_list2[[2]]
-# 
-# 
-# df_test[,c(1,2,6,8,10,11,12,13,14,15,20,28,30,31,32,34)] <- NULL
-# df_test2$diagnosis <- as.factor(df_test2$diagnosis)
-# 
-# df_train[,c(1,2,6,8,10,11,12,13,14,15,20,28,30,31,32,34)] <- NULL
-# df_train2$diagnosis <- as.factor(df_train2$diagnosis)
-#################################
-
-### Multiple cross validation ###
-
-## creating dataframe with id again
-# df_list2 <- partition(df, p = 0.2, cat_col = c("diagnosis"), list_out = TRUE)
-# df_test = df_list2[[1]]
-# df_train = df_list2[[2]]
-
-# df_train3 <- merge(df_train, df_train2, by=c("mean", "pause_duration"), all.y=TRUE)
-# 
-# df_test[,c(1,2,6,8,10,11,12,13,14,15,20,28,30,31,32,34)] <- NULL
-# df_test2$diagnosis <- as.factor(df_test2$diagnosis)
-# 
-# df_train[,c(1,2,6,8,10,11,12,13,14,15,20,28,30,31,32,34)] <- NULL
-# df_train2$diagnosis <- as.factor(df_train2$diagnosis)
-
-# opskrift2 <- df_train2 %>% recipe(diagnosis ~ .) %>% # defines the outcome
-#   step_center(all_numeric()) %>%
-#   step_scale(all_numeric()) %>% # scales numeric predictors
-#   step_corr(all_numeric()) %>% 
-#   check_missing(everything()) %>%
-#   prep(training = df_train2)
+test_results %>%
+  roc_curve(truth = diagnosis, bt_prob) %>% 
+  autoplot()
 
 
-#inspecting what we have done
-# train_baked2 <- juice(opskrift2) # extract df_train from rec
-# test_baked2 <- opskrift2 %>% bake(df_test2)
+
+### diagnosing schizophrenia with the only best prediction - ... ###
+
+## model
+m_lr_best <- 
+  logistic_reg() %>%
+  set_mode("classification") %>% 
+  set_engine("glm") %>%
+  fit(diagnosis ~ speechrate..nsyll.dur. , data = train_baked)
+
+##getting probabilities
+
+test_best_results <- 
+  test_baked %>% 
+  select(diagnosis) %>% 
+  mutate(
+    lr_best_class = predict(m_lr_best, new_data = test_baked) %>% 
+      pull(.pred_class),
+    lr_best_prob  = predict(m_lr_best, new_data = test_baked, type = "prob") %>% 
+      pull(.pred_1))
+
+test_best_results
+
+## performance metrics
+
+metrics(test_best_results, truth = diagnosis, estimate = lr_best_class) 
+
+test_best_results %>% 
+  mutate(lr_best_prob = 1 - lr_best_prob) %>% # for the plot to show correctly (otherwise the line would be flipped)
+  gain_curve(truth = diagnosis, lr_best_prob) %>% 
+  autoplot()
+
+test_best_results %>%
+  roc_curve(truth = diagnosis, lr_best_prob) %>% 
+  autoplot()
+
+```
 
 
-cv_folds <- vfold_cv(df_test, v = 10, repeats = 10, strata = diagnosis, group=uID)
+
+Multimodal cross-validation
+```{r}
+### Multimodal cross-validation ###
+
+## appending the id column back to dataframes in order to create balanced folds
+df_train <- mutate(df_train, uID=df_train_uID$uID)
+df_test <- mutate(df_test, uID=df_test_uID$uID)
+
+cv_folds <- vfold_cv(df_train, v = 10, repeats = 10, strata = diagnosis, group=uID)
 
 cv_folds <- cv_folds %>% 
   mutate(recipes = splits %>%
@@ -307,13 +333,11 @@ evaluation <-
 evaluation %>% 
   select(repeat_n = id, fold_n = id2, metric = .metric, estimate = .estimate) %>% 
   spread(metric, estimate) %>% 
-  head() %>% 
-  knitr::kable()
+  summary()
 
-#in the Kenneth's guide is written to take into accout also ID (so data of the same participant are not in the training and test datasets simultaneously). That makes perfectly sense. But We deleted the ID column at the beginning so our models don't use it as a predictor. But once excluded, how to bring them back again, without having them in our previous models???
+#mean 0.65, kap 0.30, mm_log_loss 0.96, roc_auc 0.68
 
 ```
-
 
 
 
