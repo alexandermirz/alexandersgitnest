@@ -43,6 +43,11 @@ N.N.N.N.B. A more advanced solution could rely on the tidymodels set of packages
 
 .N.N.N.B. A more advanced solution could rely on the tidymodels set of packages (warning: Time-consuming to learn as the documentation is sparse, but totally worth it)
 
+##### PLEASE NOTE, ESPECIALLY YOU, KENNETH #####
+
+## If you look for the code of random forest, svm and boost tree, you won't find them here. Because we used the same lines of code for all models with just changing a type and an engine of the model.
+
+# N.B. Kenneth's message from the last class received :-)
 
 Data&packages, preprocessing data, models and their performance matrics
 ```{r}
