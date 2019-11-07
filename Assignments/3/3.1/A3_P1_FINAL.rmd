@@ -1,0 +1,525 @@
+---
+title: "Assignment 3 - Part 1 - Voice In Schizophrenia"
+author: "Riccardo Fusaroli"
+date: "August 09, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Assignment 3 - Part 1 - Assessing voice in schizophrenia
+
+```{r}
+library(pacman)
+pacman::p_load(tidyverse, readr, psych, lme4)
+
+read_pitch <- function(filename) {
+    ## parse filename to extract study, diagnosis, subject and trial
+    string=str_split(filename, "D", simplify = T)
+    study=str_extract(string[1], "\\d")
+    # Diagnosis:
+    diag=str_split(string[2], "S", simplify =T)
+    diagnosis=diag[1]
+    # Subject: 
+    subj=str_split(diag[2], "T", simplify = T)
+    subject=subj[1]
+    # Trial: 
+    tri=str_split(subj[2],"[[:punct:]]", simplify = T)
+    trial=tri[1]
+    #Getting the data: 
+    data=read.delim(paste0("~/alexandersgitnest/Assignments/3/3.1/data/Pitch/", filename))
+    sum=describe(data$f0)
+    info <- 
+      as.data.frame(cbind(study, diagnosis, subject, trial, sum$mean, sum$sd, sum$median, IQR(data$f0)))
+    colnames(info)[5] <- c("mean")
+    colnames(info)[6] <- c("sd")
+    colnames(info)[7] <- c("median")
+    colnames(info)[8] <- c("iqr")
+      ## all information attained. 
+    return(info)
+}
+
+# test it on just one file while writing the function
+test_data = 
+  read_pitch("Study3D0S342T1T2_f0.txt")
+
+
+ # when you've created a function that works, you can
+pitch_data =
+    list.files(path = "~/alexandersgitnest/Assignments/3/3.1/data/Pitch/",
+               pattern = ".txt") %>% ## NB replace with your path to the files
+    purrr::map_df(read_pitch)
+
+write.csv(pitch_data, file = "pitch_data.csv")
+
+```
+
+
+### Now you need to merge demographic/clinical, duration and pitch data
+
+```{r}
+# Let's start with the demographic and clinical data
+demo_data <- 
+  read.csv("DemographicData.csv",
+           header = TRUE,
+           sep= ";")
+
+pitch_data <- 
+  read.csv("pitch_data.csv",
+           header = TRUE,
+           sep = ",")
+
+pitch_data <- 
+  pitch_data %>% 
+  filter(X!=1256&X!=1259) #Removing the doublettes... 
+
+pitch_data1 <- pitch_data %>% 
+  filter(study==1|study==2|study==3|study==4)
+
+demo_data1 <- demo_data %>% 
+  filter(Study==1|Study==2|Study==3|Study==4)
+
+# renaming columns in demo_data to enable for merging:
+names(demo_data1)[3]= "diagnosis"
+names(demo_data1)[1]="study"
+names(demo_data1)[4]="subject"
+demo_data1$diagnosis <- 
+  ifelse(demo_data1$diagnosis =="Control", "0", "1")
+
+# Missing values when merging: Study 3
+# merging demo_data1 and pitch_data1:
+pitch_demo1234 <- 
+  merge(demo_data1, pitch_data1,
+        by=c("subject",
+             "study",
+             "diagnosis")) #8 rows omitted... 
+
+# importing duration data
+art_data <- 
+  read.delim("Articulation.txt",
+             header = TRUE,
+             sep = ",")
+# removing doublettes:
+art_data <- 
+  art_data[-c(742, 745),]
+  
+
+# fixing the study name column to enable merging:
+clean_df <- function(data) {
+    ## parse filename to extract study, diagnosis, subject and trial
+    string=str_split(data$soundname, "D", simplify = T)
+    study=str_extract(string[,1], "\\d")
+    # Diagnosis:
+    diag=str_split(string[,2], "S", simplify =T)
+    diagnosis=diag[,1]
+    # Subject: 
+    subj=str_split(diag[,2], "T", simplify = T)
+    subject=subj[,1]
+    # Trial: 
+    tri=str_split(subj[,2], "[[:punct:]]", simplify = T)
+    trial=tri[,1]
+    info <- 
+      as.data.frame(cbind(study, diagnosis, subject, trial, data))
+      ## all information attained. 
+    return(info)
+}
+# Running the function to get the full dataframe: 
+art_data <- clean_df(art_data)
+
+# Extracting all the 1234 studies (Danish)
+art_data1234 <- 
+  art_data %>% 
+  filter(study==1|study==2|study==3|study==4)#same amount of rows as pitch_data1234, thus everything seems to be ok!
+
+#merging demo/pitch and art data:
+demo_art_pitch <- 
+  merge(pitch_demo1234, art_data1234,
+        by=c("subject", "study", "diagnosis", "trial"))
+# we now have a dataframe that enttails both the articulation, demographic and pitch data for our participants from first 4 studies!
+
+## To avoid participant names, all schizophrenics are renamed to the 1000s: 
+schiz <- demo_art_pitch %>% 
+  filter(diagnosis==1)
+schiz$subject <- schiz$subject+1000
+
+health <- demo_art_pitch %>% 
+  filter(diagnosis==0)
+  
+demo_art_pitch <- 
+  rbind(schiz, health) # final merge
+
+# Now we save them
+write.csv(demo_art_pitch, file = "demo_art_pitch.csv")
+```
+
+## Description of the sample
+
+```{r}
+demo_art_pitch2 <- 
+  read.csv("demo_art_pitch.csv", header = TRUE, sep = ",")
+
+## Removing all rows with missing values cuts the datasize in half. We have thus not done this. 
+
+## The summed info from the following commands can be found in the document
+
+# how many with each diagnosis?
+demo_art_pitch2 %>% 
+  group_by(diagnosis) %>% 
+  count()
+
+# how many belonging to each gender within diagnosed/no diagnosis
+demo_art_pitch2 %>% 
+  group_by(diagnosis) %>% 
+  count(Gender)
+
+# age distribution & more for the whole dataset
+demo_art_pitch2 %>% 
+  describe()
+
+# means and summary for each group (including symptom severity)
+demo_art_pitch2 %>% 
+  filter(diagnosis==0) %>% 
+  summary()
+
+demo_art_pitch2 %>% 
+  filter(diagnosis==1) %>% 
+  summary()
+#very balanced means... 
+  
+# doing the same for study and diagnosis
+demo_art_pitch2 %>% 
+  filter(study==1) %>% 
+  filter(diagnosis==0) %>% 
+  describe()
+
+demo_art_pitch2 %>% 
+  filter(study==1) %>% 
+  filter(diagnosis==0) %>% 
+  count(Gender)
+
+demo_art_pitch2 %>% 
+  group_by(subject) %>% 
+  filter(study==1) %>% 
+  filter(diagnosis==0) %>% 
+  count(Gender)
+
+
+## Schizophrenic and male: 
+nrow(distinct(filter(filter(filter(demo_art_pitch2, Gender=="M"), diagnosis==1), study==1), subject))
+nrow(distinct(filter(filter(filter(demo_art_pitch2, Gender=="F"), diagnosis==1), study==1), subject))
+nrow(distinct(filter(filter(filter(demo_art_pitch2, Gender=="M"), diagnosis==0), study==1), subject))
+nrow(distinct(filter(filter(filter(demo_art_pitch2, Gender=="F"), diagnosis==0), study==1), subject))
+
+nrow(distinct(filter(filter(filter(demo_art_pitch2, Gender=="M"), diagnosis==1), study==2), subject))
+nrow(distinct(filter(filter(filter(demo_art_pitch2, Gender=="F"), diagnosis==1), study==2), subject))
+nrow(distinct(filter(filter(filter(demo_art_pitch2, Gender=="M"), diagnosis==0), study==2), subject))
+nrow(distinct(filter(filter(filter(demo_art_pitch2, Gender=="F"), diagnosis==0), study==2), subject))
+
+nrow(distinct(filter(filter(filter(demo_art_pitch2, Gender=="M"), diagnosis==1), study==3), subject))
+nrow(distinct(filter(filter(filter(demo_art_pitch2, Gender=="F"), diagnosis==1), study==3), subject))
+nrow(distinct(filter(filter(filter(demo_art_pitch2, Gender=="M"), diagnosis==0), study==3), subject))
+nrow(distinct(filter(filter(filter(demo_art_pitch2, Gender=="F"), diagnosis==0), study==3), subject))
+
+nrow(distinct(filter(filter(filter(demo_art_pitch2, Gender=="M"), diagnosis==1), study==4), subject))
+nrow(distinct(filter(filter(filter(demo_art_pitch2, Gender=="F"), diagnosis==1), study==4), subject))
+nrow(distinct(filter(filter(filter(demo_art_pitch2, Gender=="M"), diagnosis==0), study==4), subject))
+nrow(distinct(filter(filter(filter(demo_art_pitch2, Gender=="F"), diagnosis==0), study==4), subject))
+
+demo_art_pitch2 %>% 
+  filter(study==1) %>% 
+  filter(diagnosis==1) %>% 
+  describe()
+
+
+demo_art_pitch2 %>% 
+  filter(study==2) %>% 
+  filter(diagnosis==0) %>% 
+  describe()
+
+demo_art_pitch2 %>% 
+  filter(study==2) %>% 
+  filter(diagnosis==1) %>% 
+  describe()
+
+demo_art_pitch2 %>% 
+  filter(study==3) %>%
+  filter(diagnosis==0) %>% 
+  describe()
+
+demo_art_pitch2 %>% 
+  filter(study==3) %>%
+  filter(diagnosis==1) %>% 
+  describe()
+
+demo_art_pitch2 %>% 
+  filter(study==4) %>%
+  filter(diagnosis==0) %>% 
+  describe()
+
+demo_art_pitch2 %>% 
+  filter(study==4) %>%
+  filter(diagnosis==1) %>% 
+  describe()
+
+
+```
+
+## Now we can analyze the data
+
+```{r}
+
+   set.seed(1)
+   x <- runif(7)
+
+   # Manually scaling
+   (x - mean(x)) / sd(x)
+demo_art_pitch2 <- mutate(demo_art_pitch2)
+   
+# fixing the IDs so that no participant name will occur for more than one participant:
+demo_art_pitch2 = demo_art_pitch2 %>% 
+  mutate(uPairID = paste(subject,
+                         study,
+                         sep="_"),  #Unique pair ID
+  uPairID = as.numeric(as.factor(uPairID)),
+  uID = paste(subject,
+              study,
+              diagnosis,
+              sep="_"), #unique ID.
+  uID = as.numeric(as.factor(uID)))
+
+
+# scaling the variables:
+demo_art_pitch2$scaled_iqr <- 
+  scale(demo_art_pitch2$iqr)# IQR
+
+demo_art_pitch2$scaled_prop_phon <- 
+  scale(demo_art_pitch2$phonationtime..s./demo_art_pitch2$dur..s.) #Proportion of spoken time
+
+demo_art_pitch2$scaled_speech_rate <- 
+  scale(demo_art_pitch2$speechrate..nsyll.dur.) #speech rate
+
+demo_art_pitch2$pause_duration <- 
+  (demo_art_pitch2$dur..s.- demo_art_pitch2$phonationtime..s.)/demo_art_pitch2$npause #pause duration
+demo_art_pitch2$scaled_pause_duration <- 
+  scale(demo_art_pitch2$pause_duration)
+
+# before build the models, all the rows that have NaN and Inf for pause_duration are sorted out
+demo_art_pitch2 <- 
+  demo_art_pitch2 %>% 
+  filter(npause!=0)
+
+### buillding models
+## pitch variability
+m_pvar_scal <-
+  lmer(scaled_iqr ~ diagnosis+ (1|uID),
+       demo_art_pitch2, REML = FALSE)
+summary(m_pvar_scal)
+
+## proportion of spoken time
+m_spokent_scal <- 
+  lmer(scaled_prop_phon~diagnosis+(1|uID),
+       demo_art_pitch2, REML = FALSE)
+summary(m_spokent_scal)
+
+## speech rate
+m_speechr_scal <- 
+  lmer(scaled_speech_rate~diagnosis+(1|uID),
+       demo_art_pitch2, REML = FALSE)
+summary(m_speechr_scal)
+
+## pause duration
+m_pausedur_scal <- 
+  lmer(pause_duration~diagnosis+(1|uID),
+       demo_art_pitch2, REML = FALSE)
+summary(m_pausedur_scal)
+
+#because of scaling according to the study, when including the study as a parameter in the model, it has estimate of 0.1, now it has only 0.00007 -> improvement
+
+
+### Different approach - scaling according to group:
+# scaling function
+#scaling the variables according to the study
+scaled <- function(var){
+  a <- c(NULL)
+  variable_dataframe <-
+    as.data.frame(a)
+  for(i in 1:4){
+    dat=demo_art_pitch2 %>% 
+      filter(demo_art_pitch2$study==i) 
+    variable_scaled=dat %>% 
+      select(var) %>% 
+      scale()
+    data_prep <- 
+      merge(variable_scaled, i)
+    variable_dataframe <- 
+      rbind(variable_dataframe, data_prep)
+  }
+  return(variable_dataframe)
+}
+  
+
+## at this point it is important to note, that because of noise form the "pause" part of the data, our total data amounts to 1751 rows instead of 1890. THis is becuase we have chosen to avoid NaN and Inf values in the pause duration column. This would have caused us not to be able to scale it. 
+
+
+## IQR
+iqr_scaled_study <- 
+  as.data.frame(scaled("iqr"))
+
+## Proportion spoken time
+demo_art_pitch2$propor_spokt=demo_art_pitch2$phonationtime..s./demo_art_pitch2$dur..s.
+propor_spokt_scaled_study <- 
+  scaled("propor_spokt")
+
+## Speech rate
+speech_rate_scaled_study <- 
+  scaled("speechrate..nsyll.dur.")
+
+## pause duration
+scaled_pause_duration_study<- 
+  scaled("pause_duration") 
+
+class(iqr_scaled_study)
+## Merging scaled data with new total dataframe with matching rows
+demo_art_pitch2 <- 
+  mutate(demo_art_pitch2,
+         iqr_scaled_study$iqr,
+         speech_rate_scaled_study$speechrate..nsyll.dur.,
+         propor_spokt_scaled_study$propor_spokt,
+         scaled_pause_duration_study$pause_duration)
+
+str(iqr_scaled_study)
+
+is.recursive(demo_art_pitch2)
+class(iqr_scaled_study)
+
+## buillding models based on scaled pr. study
+## pitch variability
+m_pvar_scal_study <-
+  lmer(iqr_scaled_study$iqr ~ diagnosis+(1|uID),
+       demo_art_pitch2,
+       REML = FALSE)
+summary(m_pvar_scal_study)
+
+## proportion of spoken time
+m_spokent_scal_study <- 
+  lmer(propor_spokt_scaled_study$propor_spokt~diagnosis+(1|uID),
+       demo_art_pitch2,
+       REML = FALSE)
+summary(m_spokent_scal_study)
+
+## speech rate
+m_speechr_scal <- 
+  lmer(scaled_speech_rate~diagnosis+(1|uID),
+       demo_art_pitch2,
+       REML = FALSE)
+summary(m_speechr_scal)
+
+## pause duration
+
+m_pausedur_scal <- 
+  lmer(pause_duration~diagnosis+(1|uID),
+       demo_art_pitch2,
+       REML = FALSE)
+summary(m_pausedur_scal)
+
+# BUILDING MODELS BASED ON ESTIMATES SEEMS TO BE A MORE CONSERVATIVE WAY OF GOING. 
+
+
+## Running models with study as random effect on both scaled pr. study and grand scaling:
+m_pvar_scal_study_ran <- 
+  lmer(iqr_scaled_study$iqr~diagnosis+(1|uID)+(1|study),
+       demo_art_pitch2,
+       REML = FALSE)
+summary(m_pvar_scal_study_ran)
+
+m_pvar_gscal_study_ran <- 
+  lmer(scaled_iqr~diagnosis+(1|uID) + (1|study),
+       demo_art_pitch2,
+       REML = FALSE)
+summary(m_pvar_gscal_study_ran)
+
+anova(m_pvar_gscal_study_ran, m_pvar_scal_study_ran)
+
+## Investigating the difference in scaled pr study when including and excluding random effect of study. 
+m_pvar_gscal_study_ran1 <- 
+  lmer(iqr_scaled_study$iqr~diagnosis+(1|uID) + (1|study),
+       demo_art_pitch2,
+       REML = FALSE)
+summary(m_pvar_gscal_study_ran)
+
+m_pvar_gscal_study_ran2 <- 
+  lmer(iqr_scaled_study$iqr~diagnosis+(1|uID),
+       demo_art_pitch2,
+       REML = FALSE)
+summary(m_pvar_gscal_study_ran)
+anova(m_pvar_gscal_study_ran1,
+      m_pvar_gscal_study_ran2) #Better when study is not random effect. From here on out, scaled pr. study will be the outset. 
+
+## Trying to model (random effects) for gender age:
+# pitch variability
+m_pvar_gender <- 
+  lmer(iqr_scaled_study$iqr~diagnosis+(1|uID) + (1|Gender),
+       demo_art_pitch2, 
+       REML = FALSE)
+summary(m_pvar_gender)
+
+m_pvar_gender1 <- 
+  lmer(iqr_scaled_study$iqr~diagnosis+(1|uID),
+       demo_art_pitch2,
+       REML = FALSE)
+anova(m_pvar_gender, m_pvar_gender1) #No real difference
+
+# proportion of spoken time
+m_spoken_gender <- 
+  lmer(propor_spokt_scaled_study$propor_spokt~diagnosis + (1|uID) + (1|Gender),
+       demo_art_pitch2,
+       REML = FALSE)
+summary(m_spoken_gender)
+
+m_spoken_gender1 <- 
+  lmer(propor_spokt_scaled_study$propor_spokt~diagnosis + (1|uID),
+       demo_art_pitch2,
+       REML = FALSE)
+summary(m_spoken_gender1)
+anova(m_spoken_gender, m_spoken_gender1) #No real difference
+
+# speech rate
+m_speechrate_gender <- 
+  lmer(scaled_speech_rate~diagnosis + (1|uID) + (1|Gender),
+       demo_art_pitch2,
+       REML = FALSE)
+summary(m_speechrate_gender)
+
+m_speechrate_gender1 <- 
+  lmer(scaled_speech_rate~diagnosis + (1|uID),
+       demo_art_pitch2,
+       REML = FALSE)
+summary(m_speechrate_gender1)
+anova(m_speechrate_gender, m_speechrate_gender1) # Significant difference! Speech rate is thus affected by gender! 
+
+
+names(demo_art_pitch2)[39] <- "pause_duration_spds"
+
+# pause duration
+m_pausedur_gender <- 
+  lmer(pause_duration_spds~diagnosis + (1|uID) + (1|Gender),
+       demo_art_pitch2,
+       REML = FALSE)
+summary(m_speechrate_gender)
+
+m_pausedur_gender1 <- 
+  lmer(pause_duration_spds~diagnosis + (1|uID),
+       demo_art_pitch2,
+       REML = FALSE)
+summary(m_speechrate_gender1)
+anova(m_pausedur_gender, m_pausedur_gender1) # No significant difference
+
+
+
+write.csv(demo_art_pitch2, file = "demo_art_pitch_danish.csv", row.names = FALSE)
+#because of scaling according to the study, when including the study as a parameter in the model, it has estimate of 0.1, now it has only 0.00007 -> improvement
+
+```
+
