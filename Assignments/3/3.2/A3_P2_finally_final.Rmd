@@ -53,13 +53,14 @@ Data&packages, preprocessing data, models and their performance matrics
 ```{r}
 ### data&package ###
 pacman::p_load(tidyverse, tidymodels, ggplot2, groupdata2, parsnip, randomForest, C50, psych)
-df <- read.csv(file="~/alexandersgitnest/Assignments/3/3.1/demo_art_pitch_danish")
+df <- read.csv(file="~/alexandersgitnest/Assignments/3/3.1/demo_art_pitch_danish.csv")
 
 data <- df
 data
 
 # deleting unnecessary columns (uID preserved to do partitioning according to both id and diagnosis)
-data[,c(1,2,3,5,6,8,10,11,12,13,14,15,20,28,30,31,32,34)] <- NULL
+#data[,c(1,2,3,5,6,8,10,11,12,13,14,15,20,28,30,31,32,34)] <- NULL
+data <- df[,c(4,7,9, 16, 17,18,19, 21,22,23,24,25,26,27,29, 33, 35)]
 
 #making outcome variabel factor
 data$diagnosis<- as.factor(data$diagnosis)
@@ -95,7 +96,7 @@ opskrift <- df_train %>% recipe(diagnosis ~ .) %>% # defines the outcome
 train_baked <- juice(opskrift) # extract df_train from rec
 test_baked <- opskrift %>% bake(df_test)
 
-
+opskrift
 ### creating models using machine learning###
 
 ## linear regression
